@@ -1,4 +1,8 @@
-from sets import Set
+import sys
+sys.path.append("/home/matej/Dropbox/matej/workarea/pys/tarman/src")
+
+from tarman.storage import Checked
+from tarman.storage import ViewArea
 
 import curses
 import traceback
@@ -8,104 +12,91 @@ import argparse
 
 class Main(object):
 
-    def __init__(self, stdscr, directory=None):
+    def __init__(self, mainscr, stdscr, directory):
+        self.header_lns = 1
+        self.mainscr = mainscr
         self.stdscr = stdscr
-        self.selected = 0
         self.kill = False
         self.ch = -1
-        self.checkedfiles = {}
-        self.chdir(directory)
+        self.directory = os.path.abspath(directory)
+        self.checked = Checked(self.directory)
+        self.chdir(self.directory)
 
-    def addcheckedfiles(self):
-        s = Set([f[1] for f in self.listfiles if f[0]])
-        if not s:
-            return
-        if self.directory in self.checkedfiles:
-            self.checkedfiles[self.directory].update(s)
-        else:
-            self.checkedfiles[self.directory] = s
+    def header(self, text, line=0):
+        self.mainscr.clear()
+        self.mainscr.addstr(line, 0, text)
+        self.mainscr.refresh()
 
-    def chdir(self, path, checked_content=False):
-        if os.path.isdir(path):
-            self.directory = os.path.abspath(path)
-        else:
-            return
-        self.listfiles = \
-            [[checked_content, f] for f in sorted(os.listdir(self.directory))]
-        self.run(reset_cur=True)
-
-    def run(self, reset_cur=False):
-        last = len(self.listfiles) - 1
+    def chdir(self, path):
+        self.area = ViewArea(path, self.checked)
+        self.header(self.area.abspath)
         h, w = self.stdscr.getmaxyx()
+        self.area.set_params(w, h)
+        self.refresh_scr()
 
-        if self.selected < 0:
-            self.selected = 0
-        elif self.selected > last:
-            self.selected = last
-
-        if self.selected >= h - 1:  # at start
-            j = self.selected - h + 1
-            y = h - 1
-        else:  # further
-            j = 0
-            y = self.selected
-
+    def refresh_scr(self):
         self.stdscr.clear()
-        for i in range(min(last + 1, h)):
-            b = self.listfiles[i + j][0]
+
+        iitem = 0
+        for item in self.area:
+            i, name, check = item
             self.stdscr.addstr(
-                i, 0, "[{0}] {1}".format(
-                    "*" if b else " ",
-                    self.listfiles[i + j][1][:w]
+                iitem, 0, "[{0}] ... {1}".format(
+                    '*' if check else ' ',
+                    name
                 )
             )
-            i += 1
-            if h == i:
-                break
+            iitem += 1
 
-        if reset_cur:
-            self.stdscr.move(0, 1)
-        else:
-            self.stdscr.move(y, 1)
+        y = self.area.selected
+
+        self.stdscr.chgat(y, 0, self.area.width, curses.A_REVERSE)
+        self.stdscr.move(y, 1)
 
     def loop(self):
         while not self.kill:
             self.ch = self.stdscr.getch()
+            h, w = self.stdscr.getmaxyx()
 
             if self.ch in [ord('q'), 27]:
                 self.kill = True
 
             elif self.ch == curses.KEY_UP:
-                self.selected -= 1
+                self.area.set_params(w, h, offset=-1)
 
             elif self.ch == curses.KEY_DOWN:
-                self.selected += 1
+                self.area.set_params(w, h, offset=1)
 
             elif self.ch == curses.KEY_PPAGE:
-                self.selected -= self.stdscr.getmaxyx()[0] / 2
+                pass
 
             elif self.ch == curses.KEY_NPAGE:
-                self.selected += self.stdscr.getmaxyx()[0] / 2
+                pass
 
             elif self.ch == 32:
-                b = self.listfiles[self.selected][0]
-                self.listfiles[self.selected][0] = not b
+                pass
 
-            elif self.ch == ord('e'):
+            elif self.ch == curses.KEY_RIGHT:
+                pass
+                """
                 self.chdir(
                     os.path.join(
-                        self.directory, self.listfiles[self.selected][1]
-                    ),
-                    checked_content=self.listfiles[self.selected][0]
+                        self.directory, self.area[self.area.selected]
+                    )
+                )
+                """
+
+            elif self.ch == curses.KEY_LEFT:
+                self.chdir(
+                    os.path.dirname(self.area.abspath)
                 )
 
             if self.ch != -1:
-                self.run()
+                self.refresh_scr()
 
             if self.kill:
                 break
 
-        self.addcheckedfiles()
         self.stdscr.clear()
 
     def cancel(self):
@@ -114,12 +105,14 @@ class Main(object):
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("directory", help="Directory.")
+    parser.add_argument("directory", nargs="?", help="Directory.")
     args = parser.parse_args()
 
     try:
         # Initialize curses
-        stdscr = curses.initscr()
+        mainscr = curses.initscr()
+        h, w = mainscr.getmaxyx()
+        stdscr = curses.newwin(h - 1, w, 1, 0)
         # Turn off echoing of keys, and enter cbreak mode,
         # where no buffering is performed on keyboard input
         curses.noecho()
@@ -136,7 +129,7 @@ if __name__ == "__main__":
         # getch will not block
         #stdscr.nodelay(1)
 
-        main = Main(stdscr, args.directory)
+        main = Main(mainscr, stdscr, args.directory)
         main.loop()   # Enter the main loop
 
         # Set everything back to normal
@@ -155,4 +148,5 @@ if __name__ == "__main__":
         main.cancel()
 
     print "##############"
-    print main.checkedfiles
+    for item in main.checked:
+        print item
