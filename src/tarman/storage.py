@@ -112,7 +112,7 @@ class ViewArea():
         self.first = self.selected = 0
         self.last = self.height = self.width = -1
 
-    def _go_by_offset(self, offset=0):
+    def _move_area(self, offset=0):
         list_len = len(self.list)
 
         first = self.first + offset
@@ -131,34 +131,38 @@ class ViewArea():
         else:
             self.last = last
 
-    def _go_down(self, by=1):
-        pass
+    def _move_index(self, offset=0):
+        self._move_area(offset=0)
 
-    def set_params(self, width, height, offset=0, selected_on_view=0):
+        y = self.selected + offset
+
+        if y < self.first:
+            self._move_area(offset=offset)
+            y = self.first
+
+        if y >= self.last:
+            self._move_area(offset=offset)
+            y = self.last - 1
+
+        self.selected = y
+        self.selected_local = y - self.first
+
+    def set_params(self, width, height, offset=0):
         self.width = width
         self.height = height
+        self._move_index(offset=offset)
 
-        self._go_by_offset(offset=offset)
+    def get_abspath(self, index):
+        return os.path.join(self.abspath, self[index])
 
-        if offset < 0:
-            pass  # go up
-        else:
-            pass  # go down
+    def get_selected_abs(self):
+        return self.get_abspath(self.selected)
 
-        '''
-        first = self.first + offset
-        if first >= list_len:
-            self.first = first - self.height
-        else:
-            self.first = first
+    def get_selected_name(self):
+        return self[self.selected]
 
-        last = height + self.first
-        if last >= list_len:
-            self.first = list_len - self.height
-            self.last = list_len
-        else:
-            self.last = last
-'''
+    def __getitem__(self, key):
+        return self.list[key]
 
     def __iter__(self):
         print self.first, self.last

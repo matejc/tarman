@@ -48,7 +48,7 @@ class Main(object):
             )
             iitem += 1
 
-        y = self.area.selected
+        y = self.area.selected_local
 
         self.stdscr.chgat(y, 0, self.area.width, curses.A_REVERSE)
         self.stdscr.move(y, 1)
@@ -68,23 +68,20 @@ class Main(object):
                 self.area.set_params(w, h, offset=1)
 
             elif self.ch == curses.KEY_PPAGE:
-                pass
+                self.area.set_params(w, h, offset=-5)
 
             elif self.ch == curses.KEY_NPAGE:
-                pass
+                self.area.set_params(w, h, offset=5)
 
             elif self.ch == 32:
-                pass
+                self.header()
 
             elif self.ch == curses.KEY_RIGHT:
-                pass
-                """
-                self.chdir(
-                    os.path.join(
-                        self.directory, self.area[self.area.selected]
-                    )
-                )
-                """
+                abspath = self.area.get_selected_abs()
+                if os.path.isdir(abspath):
+                    self.chdir(abspath)
+                else:
+                    curses.flash()
 
             elif self.ch == curses.KEY_LEFT:
                 self.chdir(
