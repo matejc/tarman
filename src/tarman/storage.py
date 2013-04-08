@@ -168,7 +168,13 @@ class ViewArea():
         print self.first, self.last
         for i in range(self.first, self.last):
             name = self.list[i]
-            yield (i, name, os.path.join(self.abspath, name) in self.checked)
+            abspath = os.path.join(self.abspath, name)
+            yield (
+                i,
+                name,
+                abspath,
+                abspath in self.checked
+            )
 
 
 if __name__ == "__main__":

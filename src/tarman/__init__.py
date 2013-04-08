@@ -8,6 +8,7 @@ import curses
 import traceback
 import os
 import argparse
+import stat
 
 
 class Main(object):
@@ -16,10 +17,22 @@ class Main(object):
         self.header_lns = 1
         self.mainscr = mainscr
         self.stdscr = stdscr
+        self.color = curses.has_colors()    # TODO
+        if self.color:
+            curses.init_pair(1, curses.COLOR_BLUE, -1)
+            self.attr_folder = curses.color_pair(1) | curses.A_BOLD
+            curses.init_pair(2, 7, -1)
+            self.attr_hidden = curses.color_pair(2)
+            self.attr_norm = curses.A_NORMAL
+            curses.init_pair(3, curses.COLOR_CYAN, -1)
+            self.attr_link = curses.color_pair(3) | curses.A_BOLD
+            curses.init_pair(4, curses.COLOR_GREEN, -1)
+            self.attr_exec = curses.color_pair(4) | curses.A_BOLD
         self.kill = False
         self.ch = -1
         self.directory = os.path.abspath(directory)
         self.checked = Checked(self.directory)
+        self.visited = {}     # TODO
         self.chdir(self.directory)
 
     def header(self, text, line=0):
@@ -34,18 +47,40 @@ class Main(object):
         self.area.set_params(w, h)
         self.refresh_scr()
 
+    def insert_line(self, y, item):
+        i, name, abspath, check = item
+        self.stdscr.addstr(
+            y, 0, "[{0}]".format('*' if check else ' ')
+        )
+        statinfo = os.stat(abspath)
+        mode = statinfo.st_mode
+        if self.color:
+
+            if stat.S_ISREG(mode):
+                if (stat.S_IXUSR & mode) or \
+                        (stat.S_IXGRP & mode) or \
+                            (stat.S_IXOTH & mode):
+                    attr = self.attr_exec
+                else:
+                    attr = self.attr_norm
+
+            elif stat.S_ISDIR(mode):
+                attr = self.attr_folder
+                name = "{0}/".format(name)
+
+            elif stat.S_IFLNK & mode:  # not working, don't know why
+                attr = self.attr_link
+
+            self.stdscr.addstr(y, 5, name, attr)
+        else:
+            self.stdscr.addstr(y, 5, name)
+
     def refresh_scr(self):
         self.stdscr.clear()
 
         iitem = 0
         for item in self.area:
-            i, name, check = item
-            self.stdscr.addstr(
-                iitem, 0, "[{0}] ... {1}".format(
-                    '*' if check else ' ',
-                    name
-                )
-            )
+            self.insert_line(iitem, item)
             iitem += 1
 
         y = self.area.selected_local
@@ -74,7 +109,7 @@ class Main(object):
                 self.area.set_params(w, h, offset=5)
 
             elif self.ch == 32:
-                self.header()
+                pass
 
             elif self.ch == curses.KEY_RIGHT:
                 abspath = self.area.get_selected_abs()
@@ -110,6 +145,10 @@ if __name__ == "__main__":
         mainscr = curses.initscr()
         h, w = mainscr.getmaxyx()
         stdscr = curses.newwin(h - 1, w, 1, 0)
+
+        curses.start_color()
+        curses.use_default_colors()
+
         # Turn off echoing of keys, and enter cbreak mode,
         # where no buffering is performed on keyboard input
         curses.noecho()
