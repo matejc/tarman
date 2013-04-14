@@ -3,17 +3,16 @@ sys.path.append("/home/matej/Dropbox/matej/workarea/pys/tarman/src")
 
 from tarman.tree import DirectoryTree
 
-import os
-
 
 class ViewArea():
     """List of files and directories for area on screen.
     When you change directory, create new instance.
     """
 
-    def __init__(self, path, height):
+    def __init__(self, path, height, container):
         self.abspath = path
-        self.list = sorted(os.listdir(self.abspath))
+        self.container = container
+        self.list = sorted(self.container.listdir(self.abspath))
         self.first = self.selected = 0
         self.last = -1
         self.set_params(height)
@@ -52,7 +51,7 @@ class ViewArea():
         self.selected_local = self.selected - self.first
 
     def get_abspath(self, index):
-        return os.path.join(self.abspath, self[index])
+        return self.container.join(self.abspath, self[index])
 
     def get_selected_abs(self):
         return self.get_abspath(self.selected)
@@ -66,7 +65,7 @@ class ViewArea():
     def __iter__(self):
         for i in range(self.first, self.last + 1):
             name = self.list[i]
-            abspath = os.path.join(self.abspath, name)
+            abspath = self.container.join(self.abspath, name)
             yield (
                 i,
                 name,
@@ -99,4 +98,3 @@ if __name__ == "__main__":
 
     print_area("/home/matej/workarea/matejc.myportal/src/")
     print_area("/home/matej/workarea/matejc.myportal/src/matejc/myportal")
-

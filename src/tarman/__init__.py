@@ -4,12 +4,11 @@ sys.path.append("/home/matej/Dropbox/matej/workarea/pys/tarman/src")
 from tarman.tree import DirectoryTree
 from tarman.viewarea import ViewArea
 from tarman.exceptions import OutOfRange
+from tarman.containers import FileSystem
 
 import curses
 import traceback
-import os
 import argparse
-import stat
 
 
 class Main(object):
@@ -23,16 +22,12 @@ class Main(object):
             curses.init_pair(1, curses.COLOR_BLUE, -1)
             self.attr_folder = curses.color_pair(1) | curses.A_BOLD
             curses.init_pair(2, 7, -1)
-            self.attr_hidden = curses.color_pair(2)
-            self.attr_norm = curses.A_NORMAL
-            curses.init_pair(3, curses.COLOR_CYAN, -1)
-            self.attr_link = curses.color_pair(3) | curses.A_BOLD
-            curses.init_pair(4, curses.COLOR_GREEN, -1)
-            self.attr_exec = curses.color_pair(4) | curses.A_BOLD
+            self.attr_norm = curses.color_pair(2)
+        self.fs = FileSystem()
         self.kill = False
         self.ch = -1
-        self.directory = os.path.abspath(directory)
-        self.checked = DirectoryTree(self.directory)
+        self.directory = self.fs.abspath(directory)
+        self.checked = DirectoryTree(self.directory, self.fs)
         self.visited = {}     # TODO
         self.area = None
         self.chdir(self.directory)
@@ -44,7 +39,7 @@ class Main(object):
 
     def chdir(self, path):
         h, w = self.stdscr.getmaxyx()
-        self.area = ViewArea(path, height=h)
+        self.area = ViewArea(path, h, self.fs)
         self.header(self.area.abspath)
         self.area.set_params(h)
         self.refresh_scr()
@@ -54,28 +49,16 @@ class Main(object):
         self.stdscr.addstr(
             y, 0, "[{0}]".format('*' if abspath in self.checked else ' ')
         )
-        statinfo = os.stat(abspath)
-        mode = statinfo.st_mode
         if self.color:
-
-            if stat.S_ISREG(mode):
-                if (stat.S_IXUSR & mode) or \
-                        (stat.S_IXGRP & mode) or \
-                            (stat.S_IXOTH & mode):
-                    attr = self.attr_exec
-                else:
-                    attr = self.attr_norm
-
-            elif stat.S_ISDIR(mode):
+            if self.fs.isdir(abspath):
                 attr = self.attr_folder
                 name = "{0}/".format(name)
-
-            elif stat.S_IFLNK & mode:  # not working, don't know why
-                attr = self.attr_link
+            else:
+                attr = self.attr_norm
 
             self.stdscr.addstr(y, 5, name, attr)
         else:
-            if stat.S_ISDIR(mode):
+            if self.fs.isdir(abspath):
                 name = "{0}/".format(name)
             self.stdscr.addstr(y, 5, name)
 
@@ -138,14 +121,14 @@ class Main(object):
                     curses.flash()
                     continue
                 abspath = self.area.get_abspath(index)
-                if os.path.isdir(abspath):
+                if self.fs.isdir(abspath):
                     self.chdir(abspath)
                 else:
                     curses.flash()
 
             elif self.ch == curses.KEY_LEFT:
                 self.chdir(
-                    os.path.dirname(self.area.abspath)
+                    self.fs.dirname(self.area.abspath)
                 )
 
             if self.ch != -1:
@@ -211,4 +194,4 @@ if __name__ == "__main__":
     print main.area.selected_local
     print "##############"
     for item in main.checked:
-        print item
+        print item.get_path()

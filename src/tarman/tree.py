@@ -5,9 +5,6 @@ from tarman.exceptions import NotFound
 from tarman.exceptions import AlreadyExists
 from tarman.exceptions import OutOfRange
 
-import os
-import stat
-
 
 class Node():
 
@@ -74,14 +71,14 @@ class Tree():
 
 class FileNode(Node):
 
-    def __init__(self, path, parent=None, sub=True):
+    def __init__(self, path, container, parent=None, sub=True):
         try:
-            self.mode = os.stat(path).st_mode
+            self.container = container
             self.parent = parent
             if self.parent is None:
                 self.data = path
             else:
-                self.data = os.path.basename(path)
+                self.data = self.container.basename(path)
                 for c in self.parent.children:
                     if self.data == c.data:
                         raise AlreadyExists(
@@ -90,27 +87,24 @@ class FileNode(Node):
                         )
             self.children = []
             if self.is_dir() and sub:
-                for n in os.listdir(path):
-                    self.add_subdir(os.path.join(path, n))
+                for n in self.container.listdir(path):
+                    self.add_subdir(self.container.join(path, n))
         except OSError:
             raise NotFound(path)
 
     def is_dir(self):
-        if stat.S_ISDIR(self.mode):
-            return True
-        else:
-            return False
+        return self.container.isdir(self.get_path())
 
     def get_path(self):
         if self.parent:
-            return os.path.join(*self.get_data_array())
+            return self.container.join(*self.get_data_array())
         else:
             return self.data
 
     def add_subdir(self, path, parent=None, sub=True):
         parent = parent if parent else self
         try:
-            tmp = FileNode(path, parent=self, sub=sub)
+            tmp = FileNode(path, self.container, parent=self, sub=sub)
             if self.children:
                 self.children += [tmp]
             else:
@@ -119,13 +113,12 @@ class FileNode(Node):
         except AlreadyExists as e:
             return e.child  # self.add_subdir(path=path, parent=e.child, sub=sub)
 
-    @staticmethod
-    def _get_array_by_path(path):
+    def _get_array_by_path(self, path):
         result = []
-        prefix, name = os.path.split(path)
+        prefix, name = self.container.split(path)
         while name:
             result = [name] + result
-            prefix, name = os.path.split(prefix)
+            prefix, name = self.container.split(prefix)
         return result
 
     def get_children_data(self):
@@ -141,21 +134,22 @@ class FileNode(Node):
         f1 = self.get_path()
         f2 = node.get_path()
 
-        return os.path.samefile(f1, f2)
+        return self.container.samefile(f1, f2)
 
 
 class DirectoryTree(Tree):
 
-    def __init__(self, root_dir):
+    def __init__(self, root_dir, container):
         self.root_dir = root_dir
-        self.root = FileNode(self.root_dir, sub=False)
+        self.container = container
+        self.root = FileNode(self.root_dir, self.container, sub=False)
 
     def __iter__(self):
         return self.root.__iter__()
 
     def add(self, path, sub=False):
-        main_array = FileNode._get_array_by_path(self.root_dir)
-        path_array = FileNode._get_array_by_path(path)
+        main_array = self.root._get_array_by_path(self.root_dir)
+        path_array = self.root._get_array_by_path(path)
 
         d = self.root
         len_main = len(main_array)
@@ -170,21 +164,21 @@ class DirectoryTree(Tree):
 
         for i in range(len_main, len_path - 1):
             d = d.add_subdir(
-                os.path.join(d.get_path(), path_array[i]),
+                self.container.join(d.get_path(), path_array[i]),
                 sub=False
             )
 
         if len_main < len_path:
             d = d.add_subdir(
-                    os.path.join(d.get_path(), path_array[i + 1]),
+                    self.container.join(d.get_path(), path_array[i + 1]),
                     sub=sub
                 )
 
         return d
 
     def __contains__(self, path):
-        main_array = FileNode._get_array_by_path(self.root_dir)
-        path_array = FileNode._get_array_by_path(path)
+        main_array = self.root._get_array_by_path(self.root_dir)
+        path_array = self.root._get_array_by_path(path)
 
         d = self.root
         len_main = len(main_array)
@@ -205,8 +199,8 @@ class DirectoryTree(Tree):
         return True
 
     def __getitem__(self, path):
-        main_array = FileNode._get_array_by_path(self.root_dir)
-        path_array = FileNode._get_array_by_path(path)
+        main_array = self.root._get_array_by_path(self.root_dir)
+        path_array = self.root._get_array_by_path(path)
 
         d = self.root
         len_main = len(main_array)
@@ -233,7 +227,9 @@ class DirectoryTree(Tree):
 
 
 if __name__ == "__main__":
-    tree = DirectoryTree("/home/matej/workarea/matejc.myportal/src")
+    from tarman.containers import FileSystem
+
+    tree = DirectoryTree("/home/matej/workarea/matejc.myportal/src", FileSystem())
 
     a1 = tree.add("/home/matej/workarea/matejc.myportal/src")
     a2 = tree.add("/home/matej/workarea/matejc.myportal/src/matejc/myportal/profiles", True)

@@ -4,6 +4,10 @@ class TarmanError(Exception):
     pass
 
 
+class NotImplemented(TarmanError):
+    pass
+
+
 class AlreadyExists(TarmanError):
     def __init__(self, message, child):
         super(AlreadyExists, self).__init__(message)
