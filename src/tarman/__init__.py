@@ -5,15 +5,18 @@ from tarman.tree import DirectoryTree
 from tarman.viewarea import ViewArea
 from tarman.exceptions import OutOfRange
 from tarman.containers import FileSystem
+from tarman.containers import Dummy
 
 import curses
 import traceback
 import argparse
+import logging
 
 
 class Main(object):
 
     def __init__(self, mainscr, stdscr, directory):
+        logging.basicConfig(filename='tarman.log', filemode='w', level=logging.DEBUG)
         self.header_lns = 1
         self.mainscr = mainscr
         self.stdscr = stdscr
@@ -23,13 +26,13 @@ class Main(object):
             self.attr_folder = curses.color_pair(1) | curses.A_BOLD
             curses.init_pair(2, 7, -1)
             self.attr_norm = curses.color_pair(2)
-        self.fs = FileSystem()
         self.kill = False
         self.ch = -1
-        self.directory = self.fs.abspath(directory)
-        self.checked = DirectoryTree(self.directory, self.fs)
         self.visited = {}     # TODO
         self.area = None
+        self.container = FileSystem()
+        self.directory = self.container.abspath(directory)
+        self.checked = DirectoryTree(self.directory, self.container)
         self.chdir(self.directory)
 
     def header(self, text, line=0):
@@ -37,12 +40,57 @@ class Main(object):
         self.mainscr.addstr(line, 0, text)
         self.mainscr.refresh()
 
-    def chdir(self, path):
-        h, w = self.stdscr.getmaxyx()
-        self.area = ViewArea(path, h, self.fs)
-        self.header(self.area.abspath)
-        self.area.set_params(h)
-        self.refresh_scr()
+    def identify_container(self, path):
+        if self.container.isenterable(path):
+            return self.container
+
+        elif path.endswith('args.py') or path.endswith('three'):
+            return Dummy()
+
+        else:
+            return None
+
+    def chdir(self, newpath):
+        if newpath is None:
+            return False
+
+        if not newpath.startswith(self.directory):
+            return False
+
+        try:
+            if self.area is None:
+                oldsel = 0
+                oldpath = self.directory
+            else:
+                oldsel = self.area.selected
+                oldpath = self.area.abspath
+
+            oldcontainer = self.container
+
+            if newpath in self.visited:
+                newsel, newcontainer = self.visited[newpath]
+            else:
+                newcontainer = self.identify_container(newpath)
+                if newcontainer is None:
+                    return False
+                newsel = 0
+
+            self.visited[oldpath] = [oldsel, oldcontainer]
+            logging.info("OLD - {0} - {1} - {2}".format(oldpath, oldsel, oldcontainer.__class__.__name__))
+            logging.info("NEW - {0} - {1} - {2}".format(newpath, newsel, newcontainer.__class__.__name__))
+
+            h, w = self.stdscr.getmaxyx()
+            self.container = newcontainer
+            self.area = ViewArea(newpath, h, newcontainer)
+            self.header("({0})  {1}".format(
+                self.container.__class__.__name__, self.area.abspath
+            ))
+            self.area.set_params(h, offset=newsel)
+            self.refresh_scr()
+
+            return True
+        except OutOfRange:
+            curses.flash()
 
     def insert_line(self, y, item):
         i, name, abspath = item
@@ -50,7 +98,7 @@ class Main(object):
             y, 0, "[{0}]".format('*' if abspath in self.checked else ' ')
         )
         if self.color:
-            if self.fs.isdir(abspath):
+            if self.container.isenterable(abspath):
                 attr = self.attr_folder
                 name = "{0}/".format(name)
             else:
@@ -58,31 +106,27 @@ class Main(object):
 
             self.stdscr.addstr(y, 5, name, attr)
         else:
-            if self.fs.isdir(abspath):
+            if self.container.isenterable(abspath):
                 name = "{0}/".format(name)
             self.stdscr.addstr(y, 5, name)
 
     def refresh_scr(self):
-        try:
-            self.stdscr.clear()
+        self.stdscr.clear()
 
-            if len(self.area) == 0:
-                self.stdscr.addstr(1, 5, "Directory is empty!")
-                return
+        if len(self.area) == 0:
+            self.stdscr.addstr(1, 5, "Directory is empty!")
+            return
 
-            iitem = 0
-            for item in self.area:
-                self.insert_line(iitem, item)
-                iitem += 1
+        iitem = 0
+        for item in self.area:
+            self.insert_line(iitem, item)
+            iitem += 1
 
-            y = self.area.selected_local
+        y = self.area.selected_local
 
-            h, w = self.stdscr.getmaxyx()
-            self.stdscr.chgat(y, 0, w, curses.A_REVERSE)
-            self.stdscr.move(y, 1)
-        except OutOfRange:
-            self.chdir(self.checked.root_dir)
-            curses.flash()
+        h, w = self.stdscr.getmaxyx()
+        self.stdscr.chgat(y, 0, w, curses.A_REVERSE)
+        self.stdscr.move(y, 1)
 
     def loop(self):
         while not self.kill:
@@ -121,15 +165,14 @@ class Main(object):
                     curses.flash()
                     continue
                 abspath = self.area.get_abspath(index)
-                if self.fs.isdir(abspath):
-                    self.chdir(abspath)
-                else:
+                if not self.chdir(abspath):
                     curses.flash()
 
             elif self.ch == curses.KEY_LEFT:
-                self.chdir(
-                    self.fs.dirname(self.area.abspath)
-                )
+                if not self.chdir(
+                    self.container.dirname(self.area.abspath)
+                ):
+                    curses.flash()
 
             if self.ch != -1:
                 self.refresh_scr()
@@ -191,7 +234,7 @@ if __name__ == "__main__":
         traceback.print_exc()           # Print the exception
         main.cancel()
 
-    print main.area.selected_local
-    print "##############"
+    logging.info(main.visited)
+
     for item in main.checked:
-        print item.get_path()
+        logging.info(item.get_path())

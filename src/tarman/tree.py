@@ -93,7 +93,7 @@ class FileNode(Node):
             raise NotFound(path)
 
     def is_dir(self):
-        return self.container.isdir(self.get_path())
+        return self.container.isenterable(self.get_path())
 
     def get_path(self):
         if self.parent:

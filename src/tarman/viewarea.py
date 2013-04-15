@@ -51,7 +51,10 @@ class ViewArea():
         self.selected_local = self.selected - self.first
 
     def get_abspath(self, index):
-        return self.container.join(self.abspath, self[index])
+        try:
+            return self.container.join(self.abspath, self[index])
+        except IndexError:
+            return None
 
     def get_selected_abs(self):
         return self.get_abspath(self.selected)
