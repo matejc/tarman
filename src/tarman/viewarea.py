@@ -1,6 +1,3 @@
-import sys
-sys.path.append("/home/matej/Dropbox/matej/workarea/pys/tarman/src")
-
 from tarman.tree import DirectoryTree
 
 

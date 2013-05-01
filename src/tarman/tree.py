@@ -1,6 +1,3 @@
-import sys
-sys.path.append("/home/matej/Dropbox/matej/workarea/pys/tarman/src")
-
 from tarman.exceptions import NotFound
 from tarman.exceptions import AlreadyExists
 from tarman.exceptions import OutOfRange
@@ -86,7 +83,7 @@ class FileNode(Node):
                             c
                         )
             self.children = []
-            if self.is_dir() and sub:
+            if sub and self.is_dir():
                 for n in self.container.listdir(path):
                     self.add_subdir(self.container.join(path, n))
         except OSError:
