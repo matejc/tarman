@@ -113,17 +113,90 @@ class Dummy(Container):
     def abspath(self, path):
         return path
 
-    def dirname(self, path):
-        return os.path.dirname(path)
 
-    def basename(self, path):
-        return os.path.basename(path)
+class Tar(Container, Archive):
 
-    def join(self, *parts):
-        return os.path.join(*parts)
+    def __init__(self, path):
+        self.path = os.path.abspath(path)
+        self.archive = Tar.open(self.path)
+        self.tree = DirectoryTree(self.path, self)
+        names = self.archive.getnames()
+        for n in names:
+            self.tree.add(os.path.join(self.path, n))
 
-    def split(self, path):
-        return os.path.split(path)
+    def listdir(self, path):
+        children = self.tree[path].children
+        return [c.data for c in children]
 
-    def samefile(self, f1, f2):
-        return f1 == f2
+    def isenterable(self, path):
+        children = self.tree[path].children
+        return True if children else False
+
+    def abspath(self, path):
+        return self.tree[path].get_path()
+
+    @staticmethod
+    def isarchive(path):
+        return tarfile.is_tarfile(path)
+
+    @staticmethod
+    def open(path):
+        return tarfile.open(path)
+
+    @staticmethod
+    def extract(archive, target_path, checked=None):
+        if checked:
+            members = []
+            for node in checked:
+                arr = node.get_data_array()[1:]  # without root data
+                if arr[0] == '..':
+                    continue
+                members += [archive.getmember(os.sep.join(arr))]
+        else:
+            members = None
+        archive.extractall(path=target_path, members=members)
+
+
+class Zip(Container, Archive):
+
+    def __init__(self, path):
+        self.path = os.path.abspath(path)
+        self.archive = Zip.open(self.path)
+        self.tree = DirectoryTree(self.path, self)
+        names = self.archive.namelist()
+        for n in names:
+            if n[-1] == os.sep:
+                continue
+            self.tree.add(os.path.join(self.path, n))
+
+    def listdir(self, path):
+        children = self.tree[path].children
+        return [c.data for c in children]
+
+    def isenterable(self, path):
+        children = self.tree[path].children
+        return True if children else False
+
+    def abspath(self, path):
+        return self.tree[path].get_path()
+
+    @staticmethod
+    def isarchive(path):
+        return zipfile.is_zipfile(path)
+
+    @staticmethod
+    def open(path):
+        return zipfile.ZipFile(file=path)
+
+    @staticmethod
+    def extract(archive, target_path, checked=None):
+        if checked:
+            members = []
+            for node in checked:
+                arr = node.get_data_array()[1:]  # without root data
+                if arr[0] == '..':
+                    continue
+                members += [archive.getinfo(os.sep.join(arr))]
+        else:
+            members = None
+        archive.extractall(path=target_path, members=members)
