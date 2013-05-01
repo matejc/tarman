@@ -176,6 +176,26 @@ class Main(object):
                 ):
                     curses.flash()
 
+            elif self.ch in [ord('e'), ord('E')]:
+
+                if isinstance(self.container, Archive):
+                    aclass = self.container.__class__
+                    archive = self.container.archive
+                    checked = self.checked
+                else:
+                    index = self.area.selected
+                    if index == -1:
+                        curses.flash()
+                        continue
+                    abspath = self.area.get_abspath(index)
+                    if not abspath:
+                        curses.flash()
+                        continue
+                    aclass = get_archive_class(abspath)
+                    archive = aclass.open(abspath)
+                    checked = None
+                aclass.extract(archive, '.', checked=checked)
+
             if self.ch != -1:
                 self.refresh_scr()
 
