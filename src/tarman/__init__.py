@@ -1,11 +1,10 @@
-import sys
-sys.path.append("/home/matej/Dropbox/matej/workarea/pys/tarman/src")
-
 from tarman.tree import DirectoryTree
 from tarman.viewarea import ViewArea
 from tarman.exceptions import OutOfRange
 from tarman.containers import FileSystem
-from tarman.containers import Dummy
+from tarman.containers import container
+from tarman.containers import get_archive_class
+from tarman.containers import Archive
 
 import curses
 import traceback
@@ -41,14 +40,14 @@ class Main(object):
         self.mainscr.refresh()
 
     def identify_container(self, path):
-        if self.container.isenterable(path):
+        if self.container.isenterable(path):  # is folder
             return self.container
 
-        elif path.endswith('args.py') or path.endswith('three'):
-            return Dummy()
-
-        else:
+        # force one-level archive browsing
+        if not isinstance(self.container, FileSystem):
             return None
+
+        return container(path)
 
     def chdir(self, newpath):
         if newpath is None:
@@ -66,21 +65,24 @@ class Main(object):
                 oldpath = self.area.abspath
 
             oldcontainer = self.container
+            oldchecked = self.checked
 
             if newpath in self.visited:
-                newsel, newcontainer = self.visited[newpath]
+                newsel, newcontainer, newchecked = self.visited[newpath]
             else:
                 newcontainer = self.identify_container(newpath)
                 if newcontainer is None:
                     return False
+                newchecked = DirectoryTree(newpath, newcontainer)
                 newsel = 0
 
-            self.visited[oldpath] = [oldsel, oldcontainer]
+            self.visited[oldpath] = [oldsel, oldcontainer, oldchecked]
             logging.info("OLD - {0} - {1} - {2}".format(oldpath, oldsel, oldcontainer.__class__.__name__))
             logging.info("NEW - {0} - {1} - {2}".format(newpath, newsel, newcontainer.__class__.__name__))
 
             h, w = self.stdscr.getmaxyx()
             self.container = newcontainer
+            self.checked = newchecked
             self.area = ViewArea(newpath, h, newcontainer)
             self.header("({0})  {1}".format(
                 self.container.__class__.__name__, self.area.abspath
@@ -185,7 +187,8 @@ class Main(object):
     def cancel(self):
         self.kill = True
 
-if __name__ == "__main__":
+
+def main():
 
     parser = argparse.ArgumentParser()
     parser.add_argument("directory", nargs="?", help="Directory.")
@@ -238,3 +241,7 @@ if __name__ == "__main__":
 
     for item in main.checked:
         logging.info(item.get_path())
+
+
+if __name__ == "__main__":
+    main()
