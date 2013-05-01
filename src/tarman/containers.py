@@ -1,9 +1,29 @@
-import sys
-sys.path.append("/home/matej/Dropbox/matej/workarea/pys/tarman/src")
-
 from tarman.exceptions import NotImplemented
+from tarman.tree import DirectoryTree
 
+import inspect
 import os
+import sys
+import tarfile
+import zipfile
+
+
+def get_archive_class(path):
+    classes = inspect.getmembers(sys.modules[__name__], inspect.isclass)
+    for c in classes:
+        if c[0] == 'Archive':
+            continue
+        methods = inspect.getmembers(c[1], inspect.isfunction)
+        for m in methods:
+            if m[0] == 'isarchive':
+                if m[1](path):
+                    return c[1]
+    return None
+
+
+def container(path):
+    aclass = get_archive_class(path)
+    return aclass(path) if aclass else None
 
 
 class Container():
@@ -18,18 +38,36 @@ class Container():
         raise NotImplemented()
 
     def dirname(self, path):
-        raise NotImplemented()
+        return os.path.dirname(path)
 
     def basename(self, path):
-        raise NotImplemented()
+        return os.path.basename(path)
 
     def join(self, *parts):
-        raise NotImplemented()
+        return os.path.join(*parts)
 
     def split(self, path):
-        raise NotImplemented()
+        return os.path.split(path)
 
     def samefile(self, f1, f2):
+        return f1.lower() == f2.lower()
+
+
+class Archive():
+
+    def __init__(self, path):
+        raise NotImplemented()
+
+    @staticmethod
+    def isarchive(path):
+        raise NotImplemented()
+
+    @staticmethod
+    def open(path):
+        raise NotImplemented()
+
+    @staticmethod
+    def extract(archive, target_path, checked=None):
         raise NotImplemented()
 
 
