@@ -13,15 +13,14 @@ For now it supports:
     * curses browser of files
     * one-level browsing of supported archives
     * extraction of files to the current working directory
+    * window for selecting extraction directory
+    * help window
 
 
 To be done:
 
-    * window for selecting extraction directory
     * compression of files and window for choosing archive options
     * password protection option of archives that support it
-    * help window
-
 
 
 Installation to virtualenv
@@ -48,9 +47,16 @@ Usage
 Key bindings
 ============
 
-    * 'q' - quit
-    * 'up/down' - move up or down in browser
-    * 'left' - go one directory up
-    * 'right' - go in to directory or archive
-    * 'e' - extract selected files
-    * 'space' - select and unselect files
+Key bindings are listed in HELP window,
+you can access it by pressing *h* or *?* key.
+
+
+Development
+===========
+
+.. sourcecode:: bash
+
+    git clone git://github.com/matejc/tarman.git 
+    virtualenv --no-site-packages tarman
+    cd tarman/
+    bin/python setup.py develop
