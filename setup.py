@@ -2,6 +2,7 @@
 """Installer for this package."""
 
 from setuptools import setup
+from setuptools import find_packages
 
 import os
 
@@ -27,8 +28,8 @@ setup(
     author_email='cotman.matej@gmail.com',
     url='https://github.com/matejc/tarman',
     license='BSD',
-    packages=['tarman'],
-    package_dir={'tarman': 'src/tarman'},
+    packages=find_packages('src'),
+    package_dir={'': 'src'},
     zip_safe=False,
     install_requires=[
         'setuptools',
