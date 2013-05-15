@@ -1,15 +1,19 @@
+from tarman.containers import Archive
+from tarman.containers import container
+from tarman.containers import FileSystem
+from tarman.containers import get_archive_class
+from tarman.exceptions import OutOfRange
 from tarman.tree import DirectoryTree
 from tarman.viewarea import ViewArea
-from tarman.exceptions import OutOfRange
-from tarman.containers import FileSystem
-from tarman.containers import container
-from tarman.containers import get_archive_class
-from tarman.containers import Archive
 
-import curses
-import traceback
 import argparse
+import curses
+import curses.textpad
 import logging
+import os
+import threading
+import time
+import traceback
 
 
 class Main(object):
@@ -19,15 +23,25 @@ class Main(object):
         self.header_lns = 1
         self.mainscr = mainscr
         self.stdscr = stdscr
+        self.overlaywin = Main.OverlayWin(self)
         self.color = curses.has_colors()
         if self.color:
+            # set file type attributes (color and bold)
             curses.init_pair(1, curses.COLOR_BLUE, -1)
             self.attr_folder = curses.color_pair(1) | curses.A_BOLD
             curses.init_pair(2, 7, -1)
             self.attr_norm = curses.color_pair(2)
+
+            # set wright / wrong attributes (color and bold)
+            curses.init_pair(3, curses.COLOR_GREEN, -1)
+            self.attr_wright = curses.color_pair(3) | curses.A_BOLD
+
+            curses.init_pair(4, curses.COLOR_RED, -1)
+            self.attr_wrong = curses.color_pair(4) | curses.A_BOLD
+
         self.kill = False
         self.ch = -1
-        self.visited = {}     # TODO
+        self.visited = {}
         self.area = None
         self.container = FileSystem()
         self.directory = self.container.abspath(directory)
@@ -130,6 +144,184 @@ class Main(object):
         self.stdscr.chgat(y, 0, w, curses.A_REVERSE)
         self.stdscr.move(y, 1)
 
+    class OverlayWin():
+
+        def __init__(self, main):
+            self.main = main
+            self._clear_vars()
+
+        def _clear_vars(self):
+            self.showing = False
+            self.newwin = None
+            self.textwin = None
+            self.textbox = None
+            self.ch = None
+
+        def show_text(self, text):
+            self._clear_vars()
+            lines, columns = self.main.stdscr.getmaxyx()
+            height, width = 5, 10
+
+            textdata = text.split('\n')
+            height = len(textdata) + 4
+            width = max([len(s) for s in textdata]) + 4
+
+            self.showing = True
+            self.exitstatus = -1
+            self.newwin = self.main.stdscr.derwin(
+                height, width, (lines / 2) - (height / 2), (columns / 2) - (width / 2)
+            )
+
+            self.newwin.border()
+            self.newwin.touchwin()
+            self.newwin.refresh()
+
+            for i in range(len(textdata)):
+                self.newwin.addstr(i + 2, 2, textdata[i])
+
+            while self.showing:
+                self.ch = self.newwin.getch()
+                if self.ch in [27]:
+                    self.close()
+
+            self.main.mainscr.touchwin()
+            self.main.mainscr.refresh()
+            self.main.stdscr.touchwin()
+            self.main.stdscr.refresh()
+            self.main.refresh_scr()
+
+        def show(self, text):
+            """
+            exitstatus:
+                -2: path not exists
+                -1: internal error
+                 0: all ok
+                 1: canceled
+            """
+            self._clear_vars()
+            lines, columns = self.main.stdscr.getmaxyx()
+            self.showing = True
+            self.exitstatus = -1
+            self.newwin = self.main.stdscr.derwin(
+                5, columns, (lines / 2) - (5 / 2), 0
+            )
+            self.text = text
+            self.newwin.border()
+            self.newwin.addstr(1, 1, text)
+            self.newwin.touchwin()
+            self.newwin.refresh()
+
+            self.textwin = self.newwin.derwin(
+                2, columns - 2, 2, 1
+            )
+            self.textwin.touchwin()
+            self.textwin.refresh()
+
+            self.textbox = curses.textpad.Textbox(self.textwin, insert_mode=True)
+            self.textbox.stripspaces = 1
+
+            def run(handle):
+                while handle.showing:
+                    handle.refresh_exists()
+                    time.sleep(0.2)
+
+            t = threading.Thread(target=run, args=(self, ))
+            t.setDaemon(True)
+            t.start()
+
+            s = self.textbox.edit(self.text_validator)
+            self.showing = False
+
+            self.main.mainscr.touchwin()
+            self.main.mainscr.refresh()
+            self.main.stdscr.touchwin()
+            self.main.stdscr.refresh()
+            self.main.refresh_scr()
+
+            s = s.replace('\n', '').strip()
+            if not os.path.exists(s):
+                self.exitstatus = -2
+
+            return self.exitstatus, s
+
+        def text_validator(self, ch):
+            y, x = self.textwin.getyx()
+            maxy, maxx = self.textwin.getmaxyx()
+
+            if ch in [27]:
+                self.exitstatus = 1
+                self.close()
+
+            elif ch in [127, curses.ascii.BS, curses.KEY_BACKSPACE]:
+                if x > 0:
+                    self.textwin.move(y, x - 1)
+                    self.textwin.delch()
+                elif y == 0:
+                    pass
+                else:
+                    self.textwin.move(y - 1, maxx - 1)
+                    self.textwin.delch()
+
+            elif ch in [330]:
+                self.textwin.delch()
+
+            elif ch in [10, 13]:
+                self.exitstatus = 0
+                self.close()
+
+            elif ch in [curses.KEY_HOME]:
+                self.textwin.move(0, 0)
+
+            elif ch in [curses.KEY_END]:
+                self.textwin.move(maxy - 1, maxx - 1)
+
+            return ch
+
+        def parse_gather_path(self):
+            s = ''
+            maxy, maxx = self.textwin.getmaxyx()
+            cy, cx = self.textwin.getyx()
+
+            for y in range(maxy):
+                self.textwin.move(y, 0)
+                for x in range(maxx):
+                    s += chr(curses.ascii.ascii(self.textwin.inch(y, x)))
+
+            self.textwin.move(cy, cx)
+            return s.replace('\n', '').strip()
+
+        def refresh_exists(self):
+            path = self.parse_gather_path()
+
+            exists = os.path.exists(path)
+
+            s = "    Exists" if exists else "Not Exists"
+
+            self.newwin.touchwin()
+            self.newwin.refresh()
+
+            if self.main.color:
+                self.newwin.addstr(
+                    1,
+                    self.newwin.getmaxyx()[1] - len(s) - 1,
+                    s,
+                    self.main.attr_wright if exists else self.main.attr_wrong
+                )
+            else:
+                self.newwin.addstr(
+                    1,
+                    self.newwin.getmaxyx()[1] - len(s) - 1,
+                    s,
+                )
+
+            self.textwin.touchwin()
+            self.textwin.refresh()
+
+        def close(self):
+            if self.textbox:
+                self.textbox.do_command = lambda x: False
+            self.showing = False
+
     def loop(self):
         while not self.kill:
             self.ch = self.stdscr.getch()
@@ -177,6 +369,12 @@ class Main(object):
                     curses.flash()
 
             elif self.ch in [ord('e'), ord('E')]:
+                exitstatus, s = self.overlaywin.show(
+                    "Extract to "
+                    "(press ENTER for confirmation or ESC to cancel):"
+                )
+                if exitstatus != 0:
+                    continue
 
                 if isinstance(self.container, Archive):
                     aclass = self.container.__class__
@@ -194,15 +392,31 @@ class Main(object):
                     aclass = get_archive_class(abspath)
                     archive = aclass.open(abspath)
                     checked = None
-                aclass.extract(archive, '.', checked=checked)
+                aclass.extract(archive, s, checked=checked)
+
+                logging.info("Extracted to '{0}'".format(s))
+
+            elif self.ch in [ord('?'), curses.KEY_F1, ord('h')]:
+                self.overlaywin.show_text(
+"""Browser window key bindings:
+ h/?/F1  - this help window
+ ESC/q   - quit
+ up/down - move up or down in browser
+ left    - go one directory up
+ right   - go in to directory or archive
+ e       - extract selected files
+ space   - select and unselect files
+
+Overlay window key bindings:
+ ESC     - cancel/close
+ ENTER   - confirm/ok"""
+                )
 
             if self.ch != -1:
                 self.refresh_scr()
 
             if self.kill:
                 break
-
-        self.stdscr.clear()
 
     def cancel(self):
         self.kill = True
@@ -211,10 +425,14 @@ class Main(object):
 def main():
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("directory", nargs="?", help="Directory.")
+    parser.add_argument("directory", nargs="?", help="Directory.", default='.')
     args = parser.parse_args()
 
+    # we need faster esc delay for more responsive program
+    os.environ['ESCDELAY'] = '25'
+
     try:
+
         # Initialize curses
         mainscr = curses.initscr()
         h, w = mainscr.getmaxyx()
