@@ -12,8 +12,8 @@ For now it supports:
 
     * curses browser of files
     * one-level browsing of supported archives
-    * extraction of files to the current working directory
-    * window for selecting extraction directory
+    * extraction of files
+    * window for extraction directory
     * help window
 
 
