@@ -67,7 +67,7 @@ class Archive():
         raise NotImplemented()
 
     @staticmethod
-    def extract(archive, target_path, checked=None):
+    def extract(container, archive, target_path, checked=None):
         raise NotImplemented()
 
 
@@ -129,8 +129,8 @@ class Tar(Container, Archive):
         return [c.data for c in children]
 
     def isenterable(self, path):
-        children = self.tree[path].children
-        return True if children else False
+        arr = self.tree[path].get_data_array()[1:]
+        return self.archive.getmember(os.sep.join(arr)).isdir()
 
     def abspath(self, path):
         return self.tree[path].get_path()
@@ -144,11 +144,11 @@ class Tar(Container, Archive):
         return tarfile.open(path)
 
     @staticmethod
-    def extract(archive, target_path, checked=None):
+    def extract(container, archive, target_path, checked=None):
         if checked:
             members = []
             for node in checked:
-                arr = node.get_data_array()[1:]  # without root data
+                arr = container.tree[node.get_path()].get_data_array()[1:]  # without root data
                 if arr[0] == '..':
                     continue
                 members += [archive.getmember(os.sep.join(arr))]
@@ -189,11 +189,11 @@ class Zip(Container, Archive):
         return zipfile.ZipFile(file=path)
 
     @staticmethod
-    def extract(archive, target_path, checked=None):
+    def extract(container, archive, target_path, checked=None):
         if checked:
             members = []
             for node in checked:
-                arr = node.get_data_array()[1:]  # without root data
+                arr = container.tree[node.get_path()].get_data_array()[1:]  # without root data
                 if arr[0] == '..':
                     continue
                 members += [archive.getinfo(os.sep.join(arr))]

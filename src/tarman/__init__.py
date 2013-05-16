@@ -380,6 +380,7 @@ class Main(object):
                     aclass = self.container.__class__
                     archive = self.container.archive
                     checked = self.checked
+                    container = self.container
                 else:
                     index = self.area.selected
                     if index == -1:
@@ -392,7 +393,8 @@ class Main(object):
                     aclass = get_archive_class(abspath)
                     archive = aclass.open(abspath)
                     checked = None
-                aclass.extract(archive, s, checked=checked)
+                    container = None
+                aclass.extract(container, archive, s, checked=checked)
 
                 logging.info("Extracted to '{0}'".format(s))
 
@@ -477,8 +479,9 @@ def main():
 
     logging.info(main.visited)
 
+    logging.info(str(main.checked))
     for item in main.checked:
-        logging.info(item.get_path())
+        logging.info(str(item.get_data_array()))
 
 
 if __name__ == "__main__":
