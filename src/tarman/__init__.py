@@ -327,7 +327,7 @@ class Main(object):
             self.ch = self.stdscr.getch()
             h, w = self.stdscr.getmaxyx()
 
-            if self.ch in [ord('q'), 27]:
+            if self.ch in [ord('q'), ]:
                 self.kill = True
 
             elif self.ch == curses.KEY_UP:
@@ -353,7 +353,7 @@ class Main(object):
                 else:
                     self.checked.add(abspath, sub=True)
 
-            elif self.ch == curses.KEY_RIGHT:
+            elif self.ch in [curses.KEY_RIGHT, 10]:
                 index = self.area.selected
                 if index == -1:
                     curses.flash()
@@ -401,17 +401,17 @@ class Main(object):
             elif self.ch in [ord('?'), curses.KEY_F1, ord('h')]:
                 self.overlaywin.show_text(
 """Browser window key bindings:
- h/?/F1  - this help window
- ESC/q   - quit
- up/down - move up or down in browser
- left    - go one directory up
- right   - go in to directory or archive
- e       - extract selected files
- space   - select and unselect files
+ h/?/F1      - this help window
+ q           - quit
+ UP/DOWN     - move up or down in browser
+ LEFT        - go one directory up
+ RIGHT/ENTER - go in to directory or archive
+ e           - extract selected files
+ SPACE       - select and unselect files
 
 Overlay window key bindings:
- ESC     - cancel/close
- ENTER   - confirm/ok"""
+ ESC         - cancel/close
+ ENTER       - confirm/ok"""
                 )
 
             if self.ch != -1:
