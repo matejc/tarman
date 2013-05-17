@@ -97,6 +97,17 @@ class FileSystem(Container):
     def samefile(self, f1, f2):
         return os.path.samefile(f1, f2)
 
+    def count_items(self, path, stop_at=-1):
+        n = 0
+        for rootdir, dirs, files in os.walk(path):
+            for f in files:
+                n += 1
+            for d in dirs:
+                n += 1
+            if n >= stop_at:
+                break
+        return n
+
 
 class Dummy(Container):
 

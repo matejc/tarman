@@ -18,6 +18,8 @@ import traceback
 
 class Main(object):
 
+    ITEMS_WARNING = 10000
+
     def __init__(self, mainscr, stdscr, directory):
         logging.basicConfig(filename='tarman.log', filemode='w', level=logging.DEBUG)
         self.header_lns = 1
@@ -190,6 +192,48 @@ class Main(object):
             self.main.stdscr.refresh()
             self.main.refresh_scr()
 
+        def show_question(self, text):
+            self._clear_vars()
+            self.exitstatus = -1
+            lines, columns = self.main.stdscr.getmaxyx()
+            height, width = 5, 10
+
+            text += "\n\nPress ESC to Cancel or ENTER for Ok!"
+
+            textdata = text.split('\n')
+            height = len(textdata) + 4
+            width = max([len(s) for s in textdata]) + 4
+
+            self.showing = True
+            self.exitstatus = -1
+            self.newwin = self.main.stdscr.derwin(
+                height, width, (lines / 2) - (height / 2), (columns / 2) - (width / 2)
+            )
+
+            self.newwin.border()
+            self.newwin.touchwin()
+            self.newwin.refresh()
+
+            for i in range(len(textdata)):
+                self.newwin.addstr(i + 2, 2, textdata[i])
+
+            while self.showing:
+                self.ch = self.newwin.getch()
+                if self.ch in [27]:
+                    self.close()
+                    self.exitstatus = 1
+                elif self.ch in [10, 13]:
+                    self.close()
+                    self.exitstatus = 0
+
+            self.main.mainscr.touchwin()
+            self.main.mainscr.refresh()
+            self.main.stdscr.touchwin()
+            self.main.stdscr.refresh()
+            self.main.refresh_scr()
+
+            return self.exitstatus
+
         def show(self, text):
             """
             exitstatus:
@@ -351,6 +395,17 @@ class Main(object):
                 if abspath in self.checked:
                     del self.checked[abspath]
                 else:
+                    if isinstance(self.container, FileSystem) and \
+                        self.container.count_items(
+                            abspath, stop_at=Main.ITEMS_WARNING
+                        ) >= Main.ITEMS_WARNING and \
+                            self.overlaywin.show_question(
+                                "There are more than {0} items in this folder,"
+                                "\ndo you really want to select it?".format(
+                                    Main.ITEMS_WARNING
+                                )
+                            ) != 0:
+                                continue
                     self.checked.add(abspath, sub=True)
 
             elif self.ch in [curses.KEY_RIGHT, 10]:
