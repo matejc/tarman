@@ -295,7 +295,7 @@ class Main(object):
 
             exists = os.path.exists(path)
 
-            s = "    Exists" if exists else "Not Exists"
+            s = "  Exists  " if exists else "Not Exists"
 
             self.newwin.touchwin()
             self.newwin.refresh()
@@ -303,14 +303,14 @@ class Main(object):
             if self.main.color:
                 self.newwin.addstr(
                     1,
-                    self.newwin.getmaxyx()[1] - len(s) - 1,
+                    self.newwin.getmaxyx()[1] / 2 - len(s) / 2,
                     s,
                     self.main.attr_wright if exists else self.main.attr_wrong
                 )
             else:
                 self.newwin.addstr(
                     1,
-                    self.newwin.getmaxyx()[1] - len(s) - 1,
+                    self.newwin.getmaxyx()[1] / 2 - len(s) / 2,
                     s,
                 )
 
