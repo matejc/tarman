@@ -6,6 +6,7 @@ import os
 import sys
 import tarfile
 import zipfile
+import logging
 
 
 def get_archive_class(path):
@@ -140,8 +141,12 @@ class Tar(Container, Archive):
         return [c.data for c in children]
 
     def isenterable(self, path):
-        arr = self.tree[path].get_data_array()[1:]
-        return self.archive.getmember(os.sep.join(arr)).isdir()
+        children = self.tree[path].children
+        result = True if children else False
+        logging.info("{0} ... {1}".format(result, path))
+        return result
+        #arr = self.tree[path].get_data_array()[1:]
+        #return self.archive.getmember(os.sep.join(arr)).isdir()
 
     def abspath(self, path):
         return self.tree[path].get_path()
