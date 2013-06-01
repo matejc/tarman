@@ -160,7 +160,7 @@ class Main(object):
         self.stdscr.chgat(y, 0, w, curses.A_REVERSE)
         self.stdscr.move(y, 1)
 
-    class OverlayWin():
+    class OverlayWin():  # TODO: separate into individual classes
 
         def __init__(self, main):
             self.main = main
@@ -197,7 +197,7 @@ class Main(object):
 
             while self.showing:
                 self.ch = self.newwin.getch()
-                if self.ch in [27]:
+                if self.ch:
                     self.close()
 
             self.main.mainscr.touchwin()
@@ -274,9 +274,10 @@ class Main(object):
                     handle.newwin.chgat(1, i, 1, curses.A_NORMAL)
                     handle.newwin.refresh()
                     i += 1
-                    if i == w:
+                    if i == w - 1:
                         i = 1
 
+                self.newwin.nodelay(0)
                 curses.curs_set(1)
                 handle.main.mainscr.touchwin()
                 handle.main.mainscr.refresh()
@@ -319,9 +320,9 @@ class Main(object):
             self.textbox.stripspaces = 1
 
             def run(handle):
-                while handle.showing:
+                while handle.showing and getattr(handle, 'textwin', None):
                     handle.refresh_exists()
-                    time.sleep(0.2)
+                    time.sleep(0.1)
 
             t = threading.Thread(target=run, args=(self, ))
             t.setDaemon(True)
@@ -484,6 +485,7 @@ class Main(object):
                     "Extract to "
                     "(press ENTER for confirmation or ESC to cancel):"
                 )
+                self.overlaywin.close()
                 if exitstatus != 0:
                     continue
 
@@ -505,9 +507,14 @@ class Main(object):
                     archive = aclass.open(abspath)
                     checked = None
                     container = None
-                aclass.extract(container, archive, s, checked=checked)
 
-                logging.info("Extracted to '{0}'".format(s))
+                self.overlaywin.show_work("Extracting ...")
+                aclass.extract(container, archive, s, checked=checked)
+                self.overlaywin.close()
+
+                #self.overlaywin.show_text("Extracted to:\n{0}".format(s))
+
+                logging.info("extracted to '{0}'".format(s))
 
             elif self.ch in [ord('?'), curses.KEY_F1, ord('h')]:
                 self.overlaywin.show_text(
