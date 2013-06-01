@@ -2,6 +2,8 @@ from tarman.exceptions import NotImplemented
 from tarman.tree import DirectoryTree
 
 import inspect
+import libarchive
+import logging
 import os
 import sys
 import tarfile
@@ -47,6 +49,8 @@ class Container():
         return os.path.join(*parts)
 
     def split(self, path):
+        if path[-1] == os.sep:
+            path = path[:-1]
         return os.path.split(path)
 
     def samefile(self, f1, f2):
@@ -148,6 +152,7 @@ class Tar(Container, Archive):
 
     @staticmethod
     def isarchive(path):
+        return False  # disable
         return tarfile.is_tarfile(path)
 
     @staticmethod
@@ -193,6 +198,7 @@ class Zip(Container, Archive):
 
     @staticmethod
     def isarchive(path):
+        return False  # disable
         return zipfile.is_zipfile(path)
 
     @staticmethod
@@ -211,3 +217,58 @@ class Zip(Container, Archive):
         else:
             members = None
         archive.extractall(path=target_path, members=members)
+
+
+class LibArchive(Container, Archive):
+
+    def __init__(self, path):
+        self.path = os.path.abspath(path)
+        self.archive = LibArchive.open(self.path)
+        self.tree = DirectoryTree(self.path, self)
+        for entry in self.archive:
+            pathname = entry.pathname
+            if os.sep == pathname[0]:
+                pathname = pathname[1:]
+            self.tree.add(os.path.join(self.path, pathname))
+
+    def listdir(self, path):
+        children = self.tree[path].children
+        return [c.data for c in children]
+
+    def isenterable(self, path):
+        children = self.tree[path].children
+        return True if children else False
+
+    def abspath(self, path):
+        return self.tree[path].get_path()
+
+    @staticmethod
+    def isarchive(path):
+        try:
+            libarchive.Archive(path)
+            logging.info("isarchive .. {0}".format(path))
+            return True
+        except Exception as e:
+            logging.error("{0} .. {1}".format(path, e.message))
+            if 'Unrecognized archive format' in e.message:
+                return False
+            else:
+                raise e
+
+    @staticmethod
+    def open(path):
+        return libarchive.Archive(path)
+
+    @staticmethod
+    def extract(container, archive, target_path, checked=None):
+        # if checked:
+        #     members = []
+        #     for node in checked:
+        #         arr = container.tree[node.get_path()].get_data_array()[1:]  # without root data
+        #         if arr[0] == '..':
+        #             continue
+        #         members += [archive.getmember(os.sep.join(arr))]
+        # else:
+        #     members = None
+        # archive.extractall(path=target_path, members=members)
+        pass
