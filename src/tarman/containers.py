@@ -28,6 +28,14 @@ def container(path):
     return aclass(path) if aclass else None
 
 
+def makepath(path):
+    try:
+        os.makedirs(path)
+        return True
+    except:
+        return False
+
+
 class Container():
 
     def listdir(self, path):
@@ -261,14 +269,31 @@ class LibArchive(Container, Archive):
 
     @staticmethod
     def extract(container, archive, target_path, checked=None):
-        # if checked:
-        #     members = []
-        #     for node in checked:
-        #         arr = container.tree[node.get_path()].get_data_array()[1:]  # without root data
-        #         if arr[0] == '..':
-        #             continue
-        #         members += [archive.getmember(os.sep.join(arr))]
-        # else:
-        #     members = None
-        # archive.extractall(path=target_path, members=members)
-        pass
+        target_path = os.path.abspath(target_path)
+        if checked:
+            arch = libarchive.SeekableArchive(container.tree.root.get_path())
+            for node in checked:
+                arr = container.tree[node.get_path()].get_data_array()[1:]  # without root data
+                if arr[0] == '..':
+                    continue
+                pathname = os.sep.join(arr)
+                path = os.path.join(target_path, pathname)
+                logging.info("create: {0}".format(path))
+                if node.is_dir():
+                    makepath(path)
+                else:
+                    makepath(os.path.dirname(path))
+                    arch.readpath(pathname, path)
+
+        else:  # extract all
+            for entry in archive:
+                pathname = entry.pathname
+                if pathname[0] == '/':
+                    pathname = pathname[1:]
+                path = os.path.join(target_path, pathname)
+                logging.info("create: {0}".format(path))
+                if entry.isdir():
+                    makepath(path)
+                else:
+                    makepath(os.path.dirname(path))
+                    archive.readpath(path)
