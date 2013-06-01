@@ -4,5 +4,6 @@ bin
 lib
 lib64
 
+examples/
 include/
 local/
