@@ -33,6 +33,7 @@ setup(
     zip_safe=False,
     install_requires=[
         'setuptools',
+        'python-libarchive',
     ],
     extras_require={
         # list libs needed for unittesting this project
