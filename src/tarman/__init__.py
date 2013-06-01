@@ -15,14 +15,15 @@ import threading
 import time
 import traceback
 
+HEADER_LNS = 1
+ITEMS_WARNING = 10000
+
 
 class Main(object):
 
-    ITEMS_WARNING = 10000
-
     def __init__(self, mainscr, stdscr, directory):
         logging.basicConfig(filename='tarman.log', filemode='w', level=logging.DEBUG)
-        self.header_lns = 1
+        self.header_lns = HEADER_LNS
         self.mainscr = mainscr
         self.stdscr = stdscr
         self.overlaywin = Main.OverlayWin(self)
@@ -50,9 +51,16 @@ class Main(object):
         self.checked = DirectoryTree(self.directory, self.container)
         self.chdir(self.directory)
 
-    def header(self, text, line=0):
-        self.mainscr.clear()
-        self.mainscr.addstr(line, 0, text)
+    def header(self, text):
+        #self.mainscr.clear()
+        h, w = self.mainscr.getmaxyx()
+        length = len(text)
+        empty = 0
+        if length > w:
+            text = "..." + text[length - w + 3:]
+        else:
+            empty = w - length
+        self.mainscr.addstr(0, 0, text + (empty * ' '))
         self.mainscr.refresh()
 
     def identify_container(self, path):
@@ -86,7 +94,12 @@ class Main(object):
             if newpath in self.visited:
                 newsel, newcontainer, newchecked = self.visited[newpath]
             else:
+                self.overlaywin.show_work("Working ...")
+
                 newcontainer = self.identify_container(newpath)
+
+                self.overlaywin.close()
+
                 if newcontainer is None:
                     return False
                 newchecked = DirectoryTree(newpath, newcontainer)
@@ -108,6 +121,7 @@ class Main(object):
 
             return True
         except OutOfRange:
+            logging.error("OutOfRange .. {0}".format(newpath))
             curses.flash()
 
     def insert_line(self, y, item):
@@ -233,6 +247,46 @@ class Main(object):
             self.main.refresh_scr()
 
             return self.exitstatus
+
+        def show_work(self, text):
+            self._clear_vars()
+            lines, columns = self.main.stdscr.getmaxyx()
+            self.showing = True
+            self.exitstatus = -1
+            w = columns / 2
+            self.newwin = self.main.stdscr.derwin(
+                3, w, (lines / 2) - (3 / 2), w - (columns / 4)
+            )
+            self.newwin.nodelay(1)
+            curses.curs_set(0)
+            self.text = text
+            self.newwin.border()
+            self.newwin.addstr(1, 1, text)
+            self.newwin.touchwin()
+            self.newwin.refresh()
+
+            def run(handle, w):
+                i = 1
+                while handle.showing:
+                    handle.newwin.chgat(1, i, 1, curses.A_REVERSE)
+                    handle.newwin.refresh()
+                    time.sleep(0.1)
+                    handle.newwin.chgat(1, i, 1, curses.A_NORMAL)
+                    handle.newwin.refresh()
+                    i += 1
+                    if i == w:
+                        i = 1
+
+                curses.curs_set(1)
+                handle.main.mainscr.touchwin()
+                handle.main.mainscr.refresh()
+                handle.main.stdscr.touchwin()
+                handle.main.stdscr.refresh()
+                handle.main.refresh_scr()
+
+            t = threading.Thread(target=run, args=(self, w))
+            t.setDaemon(True)
+            t.start()
 
         def show(self, text):
             """
@@ -397,12 +451,12 @@ class Main(object):
                 else:
                     if isinstance(self.container, FileSystem) and \
                         self.container.count_items(
-                            abspath, stop_at=Main.ITEMS_WARNING
-                        ) >= Main.ITEMS_WARNING and \
+                            abspath, stop_at=ITEMS_WARNING
+                        ) >= ITEMS_WARNING and \
                             self.overlaywin.show_question(
                                 "There are more than {0} items in this folder,"
                                 "\ndo you really want to select it?".format(
-                                    Main.ITEMS_WARNING
+                                    ITEMS_WARNING
                                 )
                             ) != 0:
                                 continue
@@ -414,7 +468,9 @@ class Main(object):
                     curses.flash()
                     continue
                 abspath = self.area.get_abspath(index)
-                if not self.chdir(abspath):
+
+                result = self.chdir(abspath)
+                if not result:
                     curses.flash()
 
             elif self.ch == curses.KEY_LEFT:
@@ -493,7 +549,7 @@ def main():
         # Initialize curses
         mainscr = curses.initscr()
         h, w = mainscr.getmaxyx()
-        stdscr = curses.newwin(h - 1, w, 1, 0)
+        stdscr = curses.newwin(h - HEADER_LNS, w, HEADER_LNS, 0)
 
         curses.start_color()
         curses.use_default_colors()
