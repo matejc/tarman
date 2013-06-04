@@ -29,7 +29,7 @@ class Node():
     def get_array(self):
         result = []
         tmp = self
-        while tmp != None:
+        while tmp is not None:
             result = [tmp] + result
             tmp = tmp.parent
         return result
@@ -37,7 +37,7 @@ class Node():
     def get_data_array(self):
         result = []
         tmp = self
-        while tmp != None:
+        while tmp is not None:
             result = [tmp.data] + result
             tmp = tmp.parent
         return result
@@ -108,7 +108,8 @@ class FileNode(Node):
                 self.children = [tmp]
             return tmp
         except AlreadyExists as e:
-            return e.child  # self.add_subdir(path=path, parent=e.child, sub=sub)
+            # self.add_subdir(path=path, parent=e.child, sub=sub)
+            return e.child
 
     def _get_array_by_path(self, path):
         result = []
@@ -167,9 +168,9 @@ class DirectoryTree(Tree):
 
         if len_main < len_path:
             d = d.add_subdir(
-                    self.container.join(d.get_path(), path_array[i + 1]),
-                    sub=sub
-                )
+                self.container.join(d.get_path(), path_array[i + 1]),
+                sub=sub
+            )
 
         return d
 
@@ -226,11 +227,18 @@ class DirectoryTree(Tree):
 if __name__ == "__main__":
     from tarman.containers import FileSystem
 
-    tree = DirectoryTree("/home/matej/workarea/matejc.myportal/src", FileSystem())
+    tree = DirectoryTree(
+        "/home/matej/workarea/matejc.myportal/src", FileSystem()
+    )
 
     a1 = tree.add("/home/matej/workarea/matejc.myportal/src")
-    a2 = tree.add("/home/matej/workarea/matejc.myportal/src/matejc/myportal/profiles", True)
-    a3 = tree.add("/home/matej/workarea/matejc.myportal/src/matejc/__init__.py")
+    a2 = tree.add(
+        "/home/matej/workarea/matejc.myportal/src/matejc/myportal/profiles",
+        True
+    )
+    a3 = tree.add(
+        "/home/matej/workarea/matejc.myportal/src/matejc/__init__.py"
+    )
 
     assert a2
     assert a3
@@ -239,12 +247,18 @@ if __name__ == "__main__":
         print n.get_path()
     print len(tree.root.children)
 
-    assert "/home/matej/workarea/matejc.myportal/src/matejc/__init__.py" in tree
-    assert "/home/matej/workarea/matejc.myportal/src/matejc/myportal/profiles/default/matejc.myportal.marker.txt" in tree
+    assert ("/home/matej/workarea/matejc.myportal/"
+            "src/matejc/__init__.py") in tree
+    assert ("/home/matej/workarea/matejc.myportal/src/matejc/myportal/"
+            "profiles/default/matejc.myportal.marker.txt") in tree
 
-    g1 = tree["/home/matej/workarea/matejc.myportal/src/matejc/myportal/profiles/default/matejc.myportal.marker.txt"]
+    g1 = tree["/home/matej/workarea/matejc.myportal/src/matejc/"
+              "myportal/profiles/default/matejc.myportal.marker.txt"]
     print g1.get_path()
 
-    assert tree["/home/matej/workarea/matejc.myportal/src/matejc/myportal/profiles/default/metadata.xml"]
-    del tree["/home/matej/workarea/matejc.myportal/src/matejc/myportal/profiles/default/metadata.xml"]
-    assert not tree["/home/matej/workarea/matejc.myportal/src/matejc/myportal/profiles/default/metadata.xml"]
+    assert tree["/home/matej/workarea/matejc.myportal/"
+                "src/matejc/myportal/profiles/default/metadata.xml"]
+    del tree["/home/matej/workarea/matejc.myportal/src/"
+             "matejc/myportal/profiles/default/metadata.xml"]
+    assert not tree["/home/matej/workarea/matejc.myportal/src/"
+                    "matejc/myportal/profiles/default/metadata.xml"]

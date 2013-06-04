@@ -172,7 +172,8 @@ class Tar(Container, Archive):
         if checked:
             members = []
             for node in checked:
-                arr = container.tree[node.get_path()].get_data_array()[1:]  # without root data
+                # without root data
+                arr = container.tree[node.get_path()].get_data_array()[1:]
                 if arr[0] == '..':
                     continue
                 members += [archive.getmember(os.sep.join(arr))]
@@ -218,7 +219,8 @@ class Zip(Container, Archive):
         if checked:
             members = []
             for node in checked:
-                arr = container.tree[node.get_path()].get_data_array()[1:]  # without root data
+                # without root data
+                arr = container.tree[node.get_path()].get_data_array()[1:]
                 if arr[0] == '..':
                     continue
                 members += [archive.getinfo(os.sep.join(arr))]
@@ -270,7 +272,8 @@ class LibArchive(Container, Archive):
         if checked:
             arch = libarchive.SeekableArchive(container.tree.root.get_path())
             for node in checked:
-                arr = container.tree[node.get_path()].get_data_array()[1:]  # without root data
+                # without root data
+                arr = container.tree[node.get_path()].get_data_array()[1:]
                 if arr[0] == '..':
                     continue
                 pathname = os.sep.join(arr)

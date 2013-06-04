@@ -24,7 +24,9 @@ ITEMS_WARNING = 10000
 class Main(object):
 
     def __init__(self, mainscr, stdscr, directory):
-        logging.basicConfig(filename='tarman.log', filemode='w', level=logging.DEBUG)
+        logging.basicConfig(
+            filename='tarman.log', filemode='w', level=logging.DEBUG
+        )
         self.header_lns = HEADER_LNS
         self.mainscr = mainscr
         self.stdscr = stdscr
@@ -108,8 +110,12 @@ class Main(object):
                 newsel = 0
 
             self.visited[oldpath] = [oldsel, oldcontainer, oldchecked]
-            logging.info("OLD - {0} - {1} - {2}".format(oldpath, oldsel, oldcontainer.__class__.__name__))
-            logging.info("NEW - {0} - {1} - {2}".format(newpath, newsel, newcontainer.__class__.__name__))
+            logging.info("OLD - {0} - {1} - {2}".format(
+                oldpath, oldsel, oldcontainer.__class__.__name__
+            ))
+            logging.info("NEW - {0} - {1} - {2}".format(
+                newpath, newsel, newcontainer.__class__.__name__
+            ))
 
             h, w = self.stdscr.getmaxyx()
             self.container = newcontainer
@@ -199,7 +205,7 @@ class Main(object):
                                 continue
                     self.checked.add(abspath, sub=True)
 
-            elif self.ch in [curses.KEY_RIGHT, 10]:
+            elif self.ch in [curses.KEY_RIGHT, 10, 13]:
                 index = self.area.selected
                 if index == -1:
                     curses.flash()
@@ -260,20 +266,18 @@ class Main(object):
 
             elif self.ch in [ord('?'), curses.KEY_F1, ord('h')]:
                 textwin = TextWin(self)
-                textwin.show(
-"""Browser window key bindings:
- h/?/F1      - this help window
- q           - quit
- UP/DOWN     - move up or down in browser
- LEFT        - go one directory up
- RIGHT/ENTER - go in to directory or archive
- e           - extract selected files
- SPACE       - select and unselect files
+                textwin.show("""Browser window key bindings:
+ h/?/F1         - this help window
+ q              - quit
+ UP/DOWN        - move up or down in browser
+ LEFT/BACKSPACE - go one directory up
+ RIGHT/ENTER    - go in to directory or archive
+ e              - extract selected files
+ SPACE          - select and unselect files
 
 Overlay window key bindings:
- ESC         - cancel/close
- ENTER       - confirm/ok"""
-                )
+ ESC            - cancel/close
+ ENTER          - confirm/ok""")
 
             if self.ch != -1:
                 self.refresh_scr()

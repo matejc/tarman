@@ -80,7 +80,9 @@ def print_area(path):
     area = ViewArea(path, 4)
     off = 8
     area.set_params(4, offset=off)
-    print "{0} of {1}, offset:{2}, path: '{3}'".format(len(area), len(area.list), off, area.abspath)
+    print "{0} of {1}, offset:{2}, path: '{3}'".format(
+        len(area), len(area.list), off, area.abspath
+    )
     for item in area:
         print item
 
@@ -90,8 +92,10 @@ if __name__ == "__main__":
     tree = DirectoryTree("/home/matej/workarea/matejc.myportal/src")
 
     a1 = tree.add("a1")
-    a2 = tree.add("/home/matej/workarea/matejc.myportal/"
-        "src/matejc/myportal/profiles", True)
+    a2 = tree.add(
+        "/home/matej/workarea/matejc.myportal/"
+        "src/matejc/myportal/profiles", True
+    )
     a3 = tree.add(
         "/home/matej/workarea/matejc.myportal/src/matejc/__init__.py"
     )
