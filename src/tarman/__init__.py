@@ -210,7 +210,8 @@ class Main(object):
                 if not result:
                     curses.flash()
 
-            elif self.ch == curses.KEY_LEFT:
+            elif self.ch in [curses.KEY_LEFT,
+                             127, curses.ascii.BS, curses.KEY_BACKSPACE]:
                 if not self.chdir(
                     self.container.dirname(self.area.abspath)
                 ):
