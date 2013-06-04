@@ -257,11 +257,8 @@ class LibArchive(Container, Archive):
             logging.info("isarchive .. {0}".format(path))
             return True
         except Exception as e:
-            logging.error("{0} .. {1}".format(path, e.message))
-            if 'Unrecognized archive format' in e.message:
-                return False
-            else:
-                raise e
+            logging.error("{0} .. {1}".format(path, e))
+            return False
 
     @staticmethod
     def open(path):
