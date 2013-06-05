@@ -1,6 +1,7 @@
-from tarman.exceptions import NotImplemented
-from tarman.tree import DirectoryTree
 from libarchive import _libarchive
+from tarman.exceptions import NotImplemented
+from tarman.exceptions import OutOfRange
+from tarman.tree import DirectoryTree
 
 import inspect
 import libarchive
@@ -255,6 +256,15 @@ class LibArchive(Container, Archive):
     def abspath(self, path):
         return self.tree[path].get_path()
 
+    def count_items(self, path, stop_at=-1):
+        node = self.tree[path]
+        n = 0
+        for p in node.__iter__():
+            n += 1
+            if n >= stop_at:
+                break
+        return n
+
     @staticmethod
     def isarchive(path):
         return libarchive.is_archive(path)
@@ -278,8 +288,11 @@ class LibArchive(Container, Archive):
             return True
 
         # if file is checked, extract it
-        if "/".join([archive_path, pathname]) in checked:
-            return True
+        try:
+            if "/".join([archive_path, pathname]) in checked:
+                return True
+        except OutOfRange:  # this is expected
+            return False
 
         # return false if file is not checked
         return False
@@ -289,6 +302,7 @@ class LibArchive(Container, Archive):
         target_path = os.path.abspath(target_path)
         archive_path = archive.filename
 
+        # reopen archive file
         archive.denit()
         archive.f.seek(0)
         archive.init()
@@ -303,7 +317,11 @@ class LibArchive(Container, Archive):
                     r = _libarchive.archive_read_next_header2(a, e)
                     if r != _libarchive.ARCHIVE_OK:
                         break
+
                     pathname = _libarchive.archive_entry_pathname(e)
+                    if pathname[-1] == '/':
+                        pathname = pathname[:-1]
+
                     path = os.path.join(target_path, pathname)
 
                     logging.info("from '{0}' to '{1}'".format(pathname, path))

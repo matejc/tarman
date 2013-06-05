@@ -69,27 +69,28 @@ class Main(object):
         )
         self.mainscr.refresh()
 
-    def identify_container(self, path):
+    def identify_container_and_checked(self, path):
         if self.container.isenterable(path):  # is folder
-            return self.container
+            return self.container, self.checked
 
         # force one-level archive browsing
         if not isinstance(self.container, FileSystem):
-            return None
+            return None, None
 
         aclass = get_archive_class(path)
 
         if not aclass:
-            return None
+            return None, None
 
         workwin = WorkWin(self)
         workwin.show("Working ...")
 
-        result = aclass(path)
+        newcontainer = aclass(path)
+        newchecked = DirectoryTree(path, newcontainer)
 
         workwin.close()
 
-        return result
+        return newcontainer, newchecked
 
     def chdir(self, newpath):
         if newpath is None:
@@ -112,10 +113,10 @@ class Main(object):
             if newpath in self.visited:
                 newsel, newcontainer, newchecked = self.visited[newpath]
             else:
-                newcontainer = self.identify_container(newpath)
+                newcontainer, newchecked = \
+                    self.identify_container_and_checked(newpath)
                 if newcontainer is None:
                     return False
-                newchecked = DirectoryTree(newpath, newcontainer)
                 newsel = 0
 
             self.visited[oldpath] = [oldsel, oldcontainer, oldchecked]
@@ -212,8 +213,7 @@ class Main(object):
                 if abspath in self.checked:
                     del self.checked[abspath]
                 else:
-                    if isinstance(self.container, FileSystem) and \
-                        self.container.count_items(
+                    if self.container.count_items(
                             abspath, stop_at=ITEMS_WARNING
                         ) >= ITEMS_WARNING and \
                             self.show_items_warning() != 0:
