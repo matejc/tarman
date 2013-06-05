@@ -313,11 +313,12 @@ class LibArchive(Container, Archive):
                     continue
                 pathname = os.sep.join(arr)
                 path = os.path.join(target_path, pathname)
-                logging.info("create: {0}".format(path))
-                if node.is_dir():
+                entry = arch.getentry(pathname)
+                if entry.isdir():
                     makepath(path)
                 else:
                     makepath(os.path.dirname(path))
+                    logging.info("from '{0}' to '{1}'".format(pathname, path))
                     arch.readpath(pathname, path)
 
         else:  # extract all
@@ -326,9 +327,9 @@ class LibArchive(Container, Archive):
                 if pathname[0] == '/':
                     pathname = pathname[1:]
                 path = os.path.join(target_path, pathname)
-                logging.info("create: {0}".format(path))
                 if entry.isdir():
                     makepath(path)
                 else:
                     makepath(os.path.dirname(path))
+                    logging.info("from '{0}' to '{1}'".format(pathname, path))
                     archive.readpath(path)
