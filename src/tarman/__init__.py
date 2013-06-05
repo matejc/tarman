@@ -53,16 +53,20 @@ class Main(object):
         self.checked = DirectoryTree(self.directory, self.container)
         self.chdir(self.directory)
 
-    def header(self, text):
+    def header(self, prefix, path):
         #self.mainscr.clear()
         h, w = self.mainscr.getmaxyx()
-        length = len(text)
+        sep = "  "
+        length = len(prefix) + len(path) + len(sep)
         empty = 0
         if length > w:
-            text = "..." + text[length - w + 3:]
+            path = "..." + path[length - w + 3:]
         else:
             empty = w - length
-        self.mainscr.addstr(0, 0, text + (empty * ' '))
+        self.mainscr.addstr(
+            0, 0,
+            "{0}{1}{2}{3}".format(prefix, sep, path, empty * ' ')
+        )
         self.mainscr.refresh()
 
     def identify_container(self, path):
@@ -126,9 +130,15 @@ class Main(object):
             self.container = newcontainer
             self.checked = newchecked
             self.area = ViewArea(newpath, h, newcontainer)
-            self.header("({0})  {1}".format(
-                self.container.__class__.__name__, self.area.abspath
-            ))
+            self.header(
+                "({0}{1}, {2}{3})".format(
+                    self.container.__class__.__name__,
+                    id(self.container),
+                    self.checked.__class__.__name__,
+                    id(self.checked)
+                ),
+                self.area.abspath
+            )
             self.area.set_params(h, offset=newsel)
             self.refresh_scr()
 
