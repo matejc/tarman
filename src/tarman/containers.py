@@ -31,6 +31,7 @@ def container(path):
 def makepath(path):
     try:
         os.makedirs(path)
+        logging.info("makepath '{0}'".format(path))
         return True
     except:
         return False
