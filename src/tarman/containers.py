@@ -1,10 +1,12 @@
 from tarman.exceptions import NotImplemented
 from tarman.tree import DirectoryTree
+from libarchive import _libarchive
 
 import inspect
 import libarchive
 import logging
 import os
+import stat
 import sys
 import tarfile
 import zipfile
@@ -263,6 +265,44 @@ class LibArchive(Container, Archive):
 
     @staticmethod
     def extract(container, archive, target_path, checked=None):
+        target_path = os.path.abspath(target_path)
+        archive_path = archive.filename
+        if checked:
+            raise NotImplemented()
+        else:
+            logging.info("START extract all '{0}'".format(archive_path))
+
+            archive.denit()
+            archive.f.seek(0)
+            archive.init()
+
+            a = archive._a
+            while True:
+                try:
+                    e = _libarchive.archive_entry_new()
+                    r = _libarchive.archive_read_next_header2(a, e)
+                    if r != _libarchive.ARCHIVE_OK:
+                        break
+                    pathname = _libarchive.archive_entry_pathname(e)
+                    path = os.path.join(target_path, pathname)
+
+                    logging.info("from '{0}' to '{1}'".format(pathname, path))
+
+                    if stat.S_ISDIR(_libarchive.archive_entry_filetype(e)):
+                        makepath(path)
+                    else:
+                        makepath(os.path.dirname(path))
+                        with open(path, 'wb') as f:
+                            _libarchive.archive_read_data_into_fd(
+                                a, f.fileno()
+                            )
+                finally:
+                    _libarchive.archive_entry_free(e)
+
+            logging.info("END extract all '{0}'".format(archive_path))
+
+    @staticmethod
+    def extract2(container, archive, target_path, checked=None):  # remove
         target_path = os.path.abspath(target_path)
         if checked:
             arch = libarchive.SeekableArchive(container.tree.root.get_path())
