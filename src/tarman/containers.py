@@ -254,13 +254,7 @@ class LibArchive(Container, Archive):
 
     @staticmethod
     def isarchive(path):
-        try:
-            libarchive.Archive(path)
-            logging.info("isarchive .. {0}".format(path))
-            return True
-        except Exception as e:
-            logging.error("{0} .. {1}".format(path, e))
-            return False
+        return libarchive.is_archive(path)
 
     @staticmethod
     def open(path):
