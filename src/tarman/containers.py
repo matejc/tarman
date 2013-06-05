@@ -264,19 +264,66 @@ class LibArchive(Container, Archive):
         return libarchive.Archive(path)
 
     @staticmethod
+    def verify(archive_path, pathname, checked):
+        # do not allow to go up in the directory tree like that
+        if pathname.startswith('..'):
+            return False
+
+        # do not allow absolute paths
+        if pathname[0] == '/':
+            return False
+
+        # if none is checked, that means, extract all
+        if not checked:
+            return True
+
+        # if file is checked, extract it
+        if "/".join([archive_path, pathname]) in checked:
+            return True
+
+        # return false if file is not checked
+        return False
+
+    @staticmethod
     def extract(container, archive, target_path, checked=None):
         target_path = os.path.abspath(target_path)
         archive_path = archive.filename
+
+        archive.denit()
+        archive.f.seek(0)
+        archive.init()
+
+        a = archive._a
+
         if checked:
-            raise NotImplemented()
+            logging.info("START extract selective '{0}'".format(archive_path))
+            while True:
+                try:
+                    e = _libarchive.archive_entry_new()
+                    r = _libarchive.archive_read_next_header2(a, e)
+                    if r != _libarchive.ARCHIVE_OK:
+                        break
+                    pathname = _libarchive.archive_entry_pathname(e)
+                    path = os.path.join(target_path, pathname)
+
+                    logging.info("from '{0}' to '{1}'".format(pathname, path))
+
+                    if LibArchive.verify(archive_path, pathname, checked):
+                        if stat.S_ISDIR(_libarchive.archive_entry_filetype(e)):
+                            makepath(path)
+                        else:
+                            makepath(os.path.dirname(path))
+                            with open(path, 'wb') as f:
+                                _libarchive.archive_read_data_into_fd(
+                                    a, f.fileno()
+                                )
+                finally:
+                    _libarchive.archive_entry_free(e)
+
+            logging.info("END extract selective '{0}'".format(archive_path))
+
         else:
             logging.info("START extract all '{0}'".format(archive_path))
-
-            archive.denit()
-            archive.f.seek(0)
-            archive.init()
-
-            a = archive._a
             while True:
                 try:
                     e = _libarchive.archive_entry_new()
@@ -300,36 +347,3 @@ class LibArchive(Container, Archive):
                     _libarchive.archive_entry_free(e)
 
             logging.info("END extract all '{0}'".format(archive_path))
-
-    @staticmethod
-    def extract2(container, archive, target_path, checked=None):  # remove
-        target_path = os.path.abspath(target_path)
-        if checked:
-            arch = libarchive.SeekableArchive(container.tree.root.get_path())
-            for node in checked:
-                # without root data
-                arr = container.tree[node.get_path()].get_data_array()[1:]
-                if arr[0] == '..':
-                    continue
-                pathname = os.sep.join(arr)
-                path = os.path.join(target_path, pathname)
-                entry = arch.getentry(pathname)
-                if entry.isdir():
-                    makepath(path)
-                else:
-                    makepath(os.path.dirname(path))
-                    logging.info("from '{0}' to '{1}'".format(pathname, path))
-                    arch.readpath(pathname, path)
-
-        else:  # extract all
-            for entry in archive:
-                pathname = entry.pathname
-                if pathname[0] == '/':
-                    pathname = pathname[1:]
-                path = os.path.join(target_path, pathname)
-                if entry.isdir():
-                    makepath(path)
-                else:
-                    makepath(os.path.dirname(path))
-                    logging.info("from '{0}' to '{1}'".format(pathname, path))
-                    archive.readpath(path)
