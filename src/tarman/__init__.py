@@ -1,5 +1,4 @@
 from tarman.containers import Archive
-from tarman.containers import container
 from tarman.containers import FileSystem
 from tarman.containers import get_archive_class
 from tarman.exceptions import OutOfRange
@@ -74,7 +73,19 @@ class Main(object):
         if not isinstance(self.container, FileSystem):
             return None
 
-        return container(path)
+        aclass = get_archive_class(path)
+
+        if not aclass:
+            return None
+
+        workwin = WorkWin(self)
+        workwin.show("Working ...")
+
+        result = aclass(path)
+
+        workwin.close()
+
+        return result
 
     def chdir(self, newpath):
         if newpath is None:
@@ -97,13 +108,7 @@ class Main(object):
             if newpath in self.visited:
                 newsel, newcontainer, newchecked = self.visited[newpath]
             else:
-                workwin = WorkWin(self)
-                workwin.show("Working ...")
-
                 newcontainer = self.identify_container(newpath)
-
-                workwin.close()
-
                 if newcontainer is None:
                     return False
                 newchecked = DirectoryTree(newpath, newcontainer)
@@ -261,8 +266,6 @@ class Main(object):
                 workwin.close()
 
                 TextWin(self).show("Extracted to:\n{0}".format(s))
-
-                logging.info("extracted to '{0}'".format(s))
 
             elif self.ch in [ord('?'), curses.KEY_F1, ord('h')]:
                 textwin = TextWin(self)
