@@ -115,13 +115,16 @@ class FileSystem(Container):
 
     def count_items(self, path, stop_at=-1):
         n = 0
+
         for rootdir, dirs, files in os.walk(path):
             for f in files:
                 n += 1
+                if n == stop_at:
+                    return n
             for d in dirs:
                 n += 1
-            if n >= stop_at:
-                break
+                if n == stop_at:
+                    return n
         return n
 
 
@@ -261,7 +264,7 @@ class LibArchive(Container, Archive):
         n = 0
         for p in node.__iter__():
             n += 1
-            if n >= stop_at:
+            if n == stop_at:
                 break
         return n
 
