@@ -35,16 +35,14 @@ setup(
         'setuptools',
         'python-libarchive',
     ],
-    extras_require={
-        # list libs needed for unittesting this project
-        'test': [
-            'mock',
-            'unittest2',
-        ],
-    },
+    tests_require=[
+        'mock',
+        'nose'
+    ],
     entry_points={
         'console_scripts': [
             "tarman = tarman:main",
         ]
     },
+    test_suite='nose.collector',
 )
