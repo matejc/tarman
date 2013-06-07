@@ -240,13 +240,14 @@ class LibArchive(Container, Archive):
 
     def __init__(self, path):
         self.path = os.path.abspath(path)
-        self.archive = LibArchive.open(self.path)
         self.tree = DirectoryTree(self.path, self)
-        for entry in self.archive:
-            pathname = entry.pathname
-            if os.sep == pathname[0]:
-                pathname = pathname[1:]
-            self.tree.add(os.path.join(self.path, pathname))
+        with LibArchive.open(self.path) as larchive:
+            self.archive = larchive
+            for entry in larchive:
+                pathname = entry.pathname
+                if os.sep == pathname[0]:
+                    pathname = pathname[1:]
+                self.tree.add(os.path.join(self.path, pathname))
 
     def listdir(self, path):
         children = self.tree[path].children
@@ -311,25 +312,51 @@ class LibArchive(Container, Archive):
         archive.init()
 
         a = archive._a
+        try:
+            if checked:
+                logging.info("START extract selective '{0}'".format(archive_path))
+                while True:
+                    try:
+                        e = _libarchive.archive_entry_new()
+                        r = _libarchive.archive_read_next_header2(a, e)
+                        if r != _libarchive.ARCHIVE_OK:
+                            break
 
-        if checked:
-            logging.info("START extract selective '{0}'".format(archive_path))
-            while True:
-                try:
-                    e = _libarchive.archive_entry_new()
-                    r = _libarchive.archive_read_next_header2(a, e)
-                    if r != _libarchive.ARCHIVE_OK:
-                        break
+                        pathname = _libarchive.archive_entry_pathname(e)
+                        if pathname[-1] == '/':
+                            pathname = pathname[:-1]
 
-                    pathname = _libarchive.archive_entry_pathname(e)
-                    if pathname[-1] == '/':
-                        pathname = pathname[:-1]
+                        path = os.path.join(target_path, pathname)
 
-                    path = os.path.join(target_path, pathname)
+                        logging.info("from '{0}' to '{1}'".format(pathname, path))
 
-                    logging.info("from '{0}' to '{1}'".format(pathname, path))
+                        if LibArchive.verify(archive_path, pathname, checked):
+                            if stat.S_ISDIR(_libarchive.archive_entry_filetype(e)):
+                                makepath(path)
+                            else:
+                                makepath(os.path.dirname(path))
+                                with open(path, 'wb') as f:
+                                    _libarchive.archive_read_data_into_fd(
+                                        a, f.fileno()
+                                    )
+                    finally:
+                        _libarchive.archive_entry_free(e)
 
-                    if LibArchive.verify(archive_path, pathname, checked):
+                logging.info("END extract selective '{0}'".format(archive_path))
+
+            else:
+                logging.info("START extract all '{0}'".format(archive_path))
+                while True:
+                    try:
+                        e = _libarchive.archive_entry_new()
+                        r = _libarchive.archive_read_next_header2(a, e)
+                        if r != _libarchive.ARCHIVE_OK:
+                            break
+                        pathname = _libarchive.archive_entry_pathname(e)
+                        path = os.path.join(target_path, pathname)
+
+                        logging.info("from '{0}' to '{1}'".format(pathname, path))
+
                         if stat.S_ISDIR(_libarchive.archive_entry_filetype(e)):
                             makepath(path)
                         else:
@@ -338,33 +365,8 @@ class LibArchive(Container, Archive):
                                 _libarchive.archive_read_data_into_fd(
                                     a, f.fileno()
                                 )
-                finally:
-                    _libarchive.archive_entry_free(e)
-
-            logging.info("END extract selective '{0}'".format(archive_path))
-
-        else:
-            logging.info("START extract all '{0}'".format(archive_path))
-            while True:
-                try:
-                    e = _libarchive.archive_entry_new()
-                    r = _libarchive.archive_read_next_header2(a, e)
-                    if r != _libarchive.ARCHIVE_OK:
-                        break
-                    pathname = _libarchive.archive_entry_pathname(e)
-                    path = os.path.join(target_path, pathname)
-
-                    logging.info("from '{0}' to '{1}'".format(pathname, path))
-
-                    if stat.S_ISDIR(_libarchive.archive_entry_filetype(e)):
-                        makepath(path)
-                    else:
-                        makepath(os.path.dirname(path))
-                        with open(path, 'wb') as f:
-                            _libarchive.archive_read_data_into_fd(
-                                a, f.fileno()
-                            )
-                finally:
-                    _libarchive.archive_entry_free(e)
-
-            logging.info("END extract all '{0}'".format(archive_path))
+                    finally:
+                        _libarchive.archive_entry_free(e)
+                logging.info("END extract all '{0}'".format(archive_path))
+        finally:
+            archive.close()
