@@ -9,11 +9,11 @@ from tarman.overlaywin import WorkWin
 from tarman.overlaywin import PathWin
 from tarman.overlaywin import QuestionWin
 
-import argparse
 import curses
 import curses.textpad
 import logging
 import os
+import sys
 import traceback
 
 HEADER_LNS = 1
@@ -313,9 +313,10 @@ Overlay window key bindings:
 
 def main():
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument("directory", nargs="?", help="Directory.", default='.')
-    args = parser.parse_args()
+    if len(sys.argv) != 2:
+        arg_directory = '.'
+    else:
+        arg_directory = sys.argv[1]
 
     # we need faster esc delay for more responsive program
     os.environ['ESCDELAY'] = '25'
@@ -346,7 +347,7 @@ def main():
         # getch will not block
         #stdscr.nodelay(1)
 
-        main = Main(mainscr, stdscr, args.directory)
+        main = Main(mainscr, stdscr, arg_directory)
         main.loop()   # Enter the main loop
 
         # Set everything back to normal
