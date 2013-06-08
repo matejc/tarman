@@ -16,4 +16,4 @@ install:
 script:
   - "python setup.py test"
 notifications:
-  - "irc.sioff.net#kiberpipa"
+  irc: "irc.sioff.net#kiberpipa"
