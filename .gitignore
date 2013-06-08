@@ -7,3 +7,5 @@ lib64
 examples/
 include/
 local/
+
+!testdata.tar.gz
