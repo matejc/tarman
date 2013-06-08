@@ -11,7 +11,7 @@ import os
 import tarman.tests.test_containers
 import tarman.tests.test_tree
 import tempfile
-import unittest
+import unittest2 as unittest
 
 
 class TestFileSystem(unittest.TestCase):

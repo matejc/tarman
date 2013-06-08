@@ -6,7 +6,7 @@ from tarman.tree import DirectoryTree
 import os
 import tarman
 import tempfile
-import unittest
+import unittest2 as unittest
 
 
 class TestDirectoryTree(unittest.TestCase):
