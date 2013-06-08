@@ -10,8 +10,7 @@ python:
 before_install:
  - sudo apt-get update -qq
  - sudo apt-get install -qq libarchive12 libarchive-dev
- - sudo find / | grep libarchive.so
- - sudo ln -s /usr/lib/libarchive.so /usr/lib/libarchive.so.13.1.2
+ - sudo ln -s /usr/lib/x86_64-linux-gnu/libarchive.so /usr/lib/x86_64-linux-gnu/libarchive.so.13.1.2
 install:
   - "python setup.py develop"
 script:
