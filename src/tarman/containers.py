@@ -314,7 +314,9 @@ class LibArchive(Container, Archive):
         a = archive._a
         try:
             if checked:
-                logging.info("START extract selective '{0}'".format(archive_path))
+                logging.info("START extract selective '{0}'".format(
+                    archive_path
+                ))
                 while True:
                     try:
                         e = _libarchive.archive_entry_new()
@@ -328,10 +330,13 @@ class LibArchive(Container, Archive):
 
                         path = os.path.join(target_path, pathname)
 
-                        logging.info("from '{0}' to '{1}'".format(pathname, path))
+                        logging.info("from '{0}' to '{1}'".format(
+                            pathname, path
+                        ))
 
                         if LibArchive.verify(archive_path, pathname, checked):
-                            if stat.S_ISDIR(_libarchive.archive_entry_filetype(e)):
+                            ftype = _libarchive.archive_entry_filetype(e)
+                            if stat.S_ISDIR(ftype):
                                 makepath(path)
                             else:
                                 makepath(os.path.dirname(path))
@@ -342,7 +347,9 @@ class LibArchive(Container, Archive):
                     finally:
                         _libarchive.archive_entry_free(e)
 
-                logging.info("END extract selective '{0}'".format(archive_path))
+                logging.info("END extract selective '{0}'".format(
+                    archive_path
+                ))
 
             else:
                 logging.info("START extract all '{0}'".format(archive_path))
@@ -355,7 +362,9 @@ class LibArchive(Container, Archive):
                         pathname = _libarchive.archive_entry_pathname(e)
                         path = os.path.join(target_path, pathname)
 
-                        logging.info("from '{0}' to '{1}'".format(pathname, path))
+                        logging.info("from '{0}' to '{1}'".format(
+                            pathname, path
+                        ))
 
                         if stat.S_ISDIR(_libarchive.archive_entry_filetype(e)):
                             makepath(path)

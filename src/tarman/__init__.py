@@ -213,11 +213,13 @@ class Main(object):
                 if abspath in self.checked:
                     del self.checked[abspath]
                 else:
-                    if self.container.count_items(
-                            abspath, stop_at=ITEMS_WARNING
-                        ) >= ITEMS_WARNING and \
+                    countitems = self.container.count_items(
+                        abspath,
+                        stop_at=ITEMS_WARNING
+                    )
+                    if countitems >= ITEMS_WARNING and \
                             self.show_items_warning() != 0:
-                                continue
+                        continue
                     self.checked.add(abspath, sub=True)
 
             elif self.ch in [curses.KEY_RIGHT, 10, 13]:
