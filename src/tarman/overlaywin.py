@@ -168,6 +168,10 @@ class PathWin(OverlayWin):
              1: canceled
         """
         text = args[0]
+        if len(args) == 2:
+            inputtext = args[1]
+        else:
+            inputtext = None
         lines, columns = self.main.stdscr.getmaxyx()
         self.showing = True
         self.exitstatus = -1
@@ -198,6 +202,8 @@ class PathWin(OverlayWin):
         t = threading.Thread(target=run, args=(self, ))
         t.setDaemon(True)
         t.start()
+
+        self.textwin.addstr(0, 0, inputtext)
 
         s = self.textbox.edit(self.text_validator)
         self.showing = False
@@ -273,14 +279,16 @@ class PathWin(OverlayWin):
         if self.main.color:
             self.newwin.addstr(
                 1,
-                self.newwin.getmaxyx()[1] / 2 - len(s) / 2,
+                # self.newwin.getmaxyx()[1] / 2 - len(s) / 2,
+                len(self.text) + 5,
                 s,
                 self.main.attr_wright if exists else self.main.attr_wrong
             )
         else:
             self.newwin.addstr(
                 1,
-                self.newwin.getmaxyx()[1] / 2 - len(s) / 2,
+                # self.newwin.getmaxyx()[1] / 2 - len(s) / 2,
+                len(self.text) + 5,
                 s,
             )
 
