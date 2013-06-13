@@ -271,7 +271,10 @@ class LibArchive(Container, Archive):
 
     @staticmethod
     def isarchive(path):
-        return libarchive.is_archive(path)
+        try:
+            return libarchive.is_archive(path)
+        except:
+            return libarchive.is_archive_name(path)
 
     @staticmethod
     def open(path):
