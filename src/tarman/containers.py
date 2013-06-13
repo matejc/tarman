@@ -382,3 +382,53 @@ class LibArchive(Container, Archive):
                 logging.info("END extract all '{0}'".format(archive_path))
         finally:
             archive.close()
+
+    @staticmethod
+    def create(container, archivepath, checked):
+        if not isinstance(container, FileSystem):
+            logging.info("container '{0}' is not FileSystem".format(container))
+            return False
+
+        archivepath = os.path.abspath(archivepath)
+
+        try:
+            with libarchive.Archive(archivepath, 'w') as a:
+                logging.info("START create selective '{0}'".format(archivepath))
+                for node in checked:
+                    path = node.get_path()
+                    pathname = os.path.join(*node.get_data_array()[1:])
+                    logging.info("from '{0}' to '{1}'".format(
+                        path, pathname
+                    ))
+                    a.writepath(path, pathname)
+                logging.info("END create selective '{0}'".format(archivepath))
+        except Exception as e:
+            logging.info("Exception '{0}': {1}".format(e))
+            return False
+        return True
+
+        """
+        a = _libarchive.archive_write_new()
+        _libarchive.archive_write_add_filter_gzip(a)
+        _libarchive.archive_write_set_format_pax_restricted(a)
+        _libarchive.archive_write_open_filename(a, archivepath, 10240)
+
+        # TODO from here:
+
+        while True:
+            e = _libarchive.archive_entry_new()
+            try:
+                r = _libarchive.archive_read_next_header2(a, e)
+                if r != _libarchive.ARCHIVE_OK:
+                    break
+                n = _libarchive.archive_entry_pathname(e)
+                if n != 'my_file.txt':
+                    continue
+                l = _libarchive.archive_entry_size(e)
+                s = _libarchive.archive_read_data_into_str(a, l)
+                print 'File Contents:', s
+            finally:
+                _libarchive.archive_entry_free(e)
+        _libarchive.archive_read_close(a)
+        _libarchive.archive_read_free(a)
+        """
