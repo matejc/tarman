@@ -281,3 +281,45 @@ class TestLibArchive(unittest.TestCase):
             for name in dirs:
                 os.rmdir(os.path.join(root, name))
         os.rmdir(tmpdir)
+
+    def test_create(self):
+        testdatadirectory = os.path.join(
+            self.testdirectory, 'testdata', 'testdata'
+        )
+        path1 = os.path.join(testdatadirectory, 'a', 'aa', 'aaa')
+        path2 = os.path.join(testdatadirectory, 'c')
+        path3 = os.path.join(testdatadirectory, 'a', 'ab')
+        fs = FileSystem()
+
+        checked = DirectoryTree(
+            testdatadirectory,
+            fs
+        )
+        checked.add(path1, False)
+        checked.add(path2, False)
+        checked.add(path3, False)
+
+        tmpdir = tempfile.mkdtemp()
+
+        testdata2archivepath = os.path.join(
+            tmpdir, 'testdata2.tar.gz'
+        )
+
+        LibArchive.create(
+            fs,
+            testdata2archivepath,
+            checked
+        )
+
+        self.assertTrue(os.path.exists(testdata2archivepath))
+
+        testdata2archive = LibArchive(testdata2archivepath)
+        apath1 = os.path.join(testdata2archivepath, 'a', 'aa', 'aaa')
+        apath2 = os.path.join(testdata2archivepath, 'c')
+        apath3 = os.path.join(testdata2archivepath, 'a', 'ab')
+        self.assertIn(apath1, testdata2archive.tree)
+        self.assertIn(apath2, testdata2archive.tree)
+        self.assertIn(apath3, testdata2archive.tree)
+
+        os.remove(testdata2archivepath)
+        os.rmdir(tmpdir)
