@@ -316,17 +316,18 @@ class Main(object):
             elif self.ch in [ord('?'), curses.KEY_F1, ord('h')]:
                 textwin = TextWin(self)
                 textwin.show("""Browser window key bindings:
- h/?/F1         - this help window
- q              - quit
- UP/DOWN        - move up or down in browser
- LEFT/BACKSPACE - go one directory up
- RIGHT/ENTER    - go in to directory or archive
+ c              - create archive from selected files
  e              - extract selected files
+ h/?/F1         - this help window
+ LEFT/BACKSPACE - go one directory up
+ q              - quit
+ RIGHT/ENTER    - go in to directory or archive
  SPACE          - select and unselect files
+ UP/DOWN        - move up or down in browser
 
 Overlay window key bindings:
- ESC            - cancel/close
- ENTER          - confirm/ok""")
+ ENTER          - confirm/ok
+ ESC            - cancel/close""")
 
             if self.ch != -1:
                 self.refresh_scr()
