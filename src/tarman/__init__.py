@@ -18,6 +18,19 @@ import traceback
 
 HEADER_LNS = 1
 ITEMS_WARNING = 10000
+HELP_STRING = """Browser window key bindings:
+ c              - create archive from selected files
+ e              - extract selected files
+ h/?/F1         - this help window
+ LEFT/BACKSPACE - go one directory up
+ q              - quit
+ RIGHT/ENTER    - go in to directory or archive
+ SPACE          - select and unselect files
+ UP/DOWN        - move up or down in browser
+
+Overlay window key bindings:
+ ENTER          - confirm/ok
+ ESC            - cancel/close"""
 
 
 class Main(object):
@@ -315,19 +328,7 @@ class Main(object):
 
             elif self.ch in [ord('?'), curses.KEY_F1, ord('h')]:
                 textwin = TextWin(self)
-                textwin.show("""Browser window key bindings:
- c              - create archive from selected files
- e              - extract selected files
- h/?/F1         - this help window
- LEFT/BACKSPACE - go one directory up
- q              - quit
- RIGHT/ENTER    - go in to directory or archive
- SPACE          - select and unselect files
- UP/DOWN        - move up or down in browser
-
-Overlay window key bindings:
- ENTER          - confirm/ok
- ESC            - cancel/close""")
+                textwin.show(HELP_STRING)
 
             if self.ch != -1:
                 self.refresh_scr()
@@ -351,9 +352,21 @@ Overlay window key bindings:
 def main():
 
     if len(sys.argv) != 2:
-        arg_directory = '.'
+        arg_directory = os.getcwd()
     else:
-        arg_directory = sys.argv[1]
+
+        if sys.argv[1] in ['-h', '--help']:
+            print "Usage: {0} <PATH>\n\n{1}".format(
+                os.path.basename(sys.argv[0]), HELP_STRING
+            )
+            sys.exit(0)
+
+        arg_directory = os.path.abspath(sys.argv[1])
+        if not os.path.exists(arg_directory):
+            not_exists_string = "Path does not exists '{0}'." \
+                .format(arg_directory)
+            logging.error(not_exists_string)
+            sys.exit(1)
 
     # we need faster esc delay for more responsive program
     os.environ['ESCDELAY'] = '25'
