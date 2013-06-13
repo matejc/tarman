@@ -215,8 +215,6 @@ class PathWin(OverlayWin):
         self.main.refresh_scr()
 
         s = s.replace('\n', '').strip()
-        if not os.path.exists(s):
-            self.exitstatus = -2
 
         return self.exitstatus, s
 
