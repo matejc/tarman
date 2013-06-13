@@ -203,7 +203,7 @@ class PathWin(OverlayWin):
         t.setDaemon(True)
         t.start()
 
-        self.textwin.addstr(0, 0, inputtext)
+        self.textwin.addstr(0, 0, inputtext if inputtext else "")
 
         s = self.textbox.edit(self.text_validator)
         self.showing = False
