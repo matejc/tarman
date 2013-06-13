@@ -240,6 +240,35 @@ class Main(object):
                 ):
                     curses.flash()
 
+            elif self.ch in [ord('c'), ord('C')]:
+                if isinstance(self.container, FileSystem):
+                    aclass = self.container.__class__
+                    checked = self.checked
+                    container = self.container
+
+                    pathwin = PathWin(self)
+                    exitstatus, archivepath = pathwin.show(
+                        "Create archive (format is based on file extension)"
+                        "(ENTER for confirmation or ESC to cancel):",
+                        "NewArchive.tar.gz"
+                    )
+                    pathwin.close()
+                    logging.info("{0} {1}".format(exitstatus, archivepath))
+                    if exitstatus != -2:  # input path does not exists - OK
+                        continue
+
+                    archivepath = os.path.abspath(archivepath)
+
+                    aclass = get_archive_class(archivepath)
+                    created = aclass.create(container, archivepath, checked)
+
+                    if created:
+                        TextWin(self).show("Created archive to:\n{0}".format(
+                            archivepath
+                        ))
+                    else:
+                        curses.flash()
+
             elif self.ch in [ord('e'), ord('E')]:
                 if isinstance(self.container, Archive):
                     aclass = self.container.__class__
