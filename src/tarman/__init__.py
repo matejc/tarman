@@ -253,7 +253,9 @@ class Main(object):
                         "NewArchive.tar.gz"
                     )
                     pathwin.close()
-                    logging.info("{0} {1}".format(exitstatus, archivepath))
+                    logging.info("window exitstatus: {0}, '{1}'".format(
+                        exitstatus, archivepath
+                    ))
                     if exitstatus != -2:  # input path does not exists - OK
                         continue
 
@@ -298,6 +300,9 @@ class Main(object):
                     "(press ENTER for confirmation or ESC to cancel):"
                 )
                 pathwin.close()
+                logging.info("window exitstatus: {0}, '{1}'".format(
+                    exitstatus, s
+                ))
                 if exitstatus != 0:
                     continue
 
