@@ -393,7 +393,9 @@ class LibArchive(Container, Archive):
 
         try:
             with libarchive.Archive(archivepath, 'w') as a:
-                logging.info("START create selective '{0}'".format(archivepath))
+                logging.info("START create selective '{0}'".format(
+                    archivepath
+                ))
                 for node in checked:
                     path = node.get_path()
                     pathname = os.path.join(*node.get_data_array()[1:])
