@@ -269,12 +269,15 @@ class Main(object):
                     logging.info("window exitstatus: {0}, '{1}'".format(
                         exitstatus, archivepath
                     ))
-                    if exitstatus != -2:  # input path does not exists - OK
+                    if exitstatus != 0:
                         continue
 
                     archivepath = os.path.abspath(archivepath)
-
                     aclass = get_archive_class(archivepath)
+                    if aclass is None:
+                        curses.flash()
+                        continue
+
                     created = aclass.create(container, archivepath, checked)
 
                     if created:
