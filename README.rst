@@ -1,26 +1,28 @@
 TarMan
 ======
 
-under construction
 
+This is archive manager with curses interface.
+Have you ever wanted to create an archive quickly without
+using help pages in the process for all the command line switches?
+Well here comes the tarman, it has only two command line options:
+    * --help or
+    * path to archive or directory
 
-This is tar manager with curses interface.
-It has no dependencies other than Python 2.7.
-It supports archives that are manageable with modules tarfile and zipfile.
+At first it was meant to be only for tar archives (hence the name),
+but support for other archives does not hurt. 
+Dependencies are:
+    * libarchive
+    * Python 2.7 (or Python 2.6)
+
+It supports archives that are manageable with libarchive.
 
 For now it supports:
 
-    * curses browser of files
+    * file browser
     * one-level browsing of supported archives
     * extraction of files
-    * window for extraction directory
-    * help window
-
-
-To be done:
-
-    * compression of files and window for choosing archive options
-    * password protection option of archives that support it
+    * create archive option
 
 
 Installation to virtualenv
