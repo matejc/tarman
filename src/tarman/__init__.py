@@ -261,8 +261,8 @@ class Main(object):
 
                     pathwin = PathWin(self)
                     exitstatus, archivepath = pathwin.show(
-                        "Create archive (format is based on file extension)"
-                        "(ENTER for confirmation or ESC to cancel):",
+                        "Create archive with format/compression based on file"
+                        " extension (ENTER to confirm or ESC to cancel):"
                         "NewArchive.tar.gz"
                     )
                     pathwin.close()
@@ -281,9 +281,11 @@ class Main(object):
                     created = aclass.create(container, archivepath, checked)
 
                     if created:
-                        TextWin(self).show("Created archive to:\n{0}".format(
-                            archivepath
-                        ))
+                        TextWin(self).show(
+                            "Successfully created archive:\n{0}".format(
+                                archivepath
+                            )
+                        )
                     else:
                         curses.flash()
 

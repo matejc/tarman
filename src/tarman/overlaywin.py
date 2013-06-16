@@ -269,7 +269,8 @@ class PathWin(OverlayWin):
 
         exists = os.path.exists(path)
 
-        s = "  Exists  " if exists else "Not Exists"
+        s = "    Current path exist    " if exists else \
+            "Current path doesn't exist"
 
         self.newwin.touchwin()
         self.newwin.refresh()
