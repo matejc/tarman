@@ -145,11 +145,8 @@ class Main(object):
             self.checked = newchecked
             self.area = ViewArea(newpath, h, newcontainer)
             self.header(
-                "({0}{1}, {2}{3})".format(
-                    self.container.__class__.__name__,
-                    id(self.container),
-                    self.checked.__class__.__name__,
-                    id(self.checked)
+                "{0}".format(
+                    self.container.__class__.__name__
                 ),
                 self.area.abspath
             )
