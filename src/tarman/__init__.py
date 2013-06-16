@@ -259,8 +259,8 @@ class Main(object):
                     pathwin = PathWin(self)
                     exitstatus, archivepath = pathwin.show(
                         "Create archive with format/compression based on file"
-                        " extension (ENTER to confirm or ESC to cancel):"
-                        "NewArchive.tar.gz"
+                        " extension (ENTER to confirm or ESC to cancel):",
+                        os.path.join(os.getcwd(), "NewArchive.tar.gz")
                     )
                     pathwin.close()
                     logging.info("window exitstatus: {0}, '{1}'".format(
