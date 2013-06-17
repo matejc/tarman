@@ -6,14 +6,18 @@ This is archive manager with curses interface.
 Have you ever wanted to create an archive quickly without
 using help pages in the process for all the command line switches?
 Well here comes the tarman, it has only two command line options:
+
     * --help or
     * path to archive or directory
+
 
 At first it was meant to be only for tar archives (hence the name),
 but support for other archives does not hurt. 
 Dependencies are:
+
     * libarchive
     * Python 2.7 (or Python 2.6)
+
 
 It supports archives that are manageable with libarchive.
 
@@ -25,17 +29,14 @@ For now it supports:
     * create archive option
 
 
-Installation to virtualenv
-==========================
-
-(very recommended, for now)
+Install from PYPI
+=================
 
 .. sourcecode:: bash
 
-    git clone git://github.com/matejc/tarman.git 
-    virtualenv --no-site-packages tarman
-    cd tarman/
-    bin/pip install .
+    virtualenv --no-site-packages some_folder/
+    cd some_folder/
+    bin/pip install tarman
 
 
 Usage
@@ -44,6 +45,19 @@ Usage
 .. sourcecode:: bash
 
     bin/tarman some/directory/
+
+
+Install of development version
+==============================
+
+It is very recommended to install it to virtualenv.
+
+.. sourcecode:: bash
+
+    git clone git://github.com/matejc/tarman.git 
+    virtualenv --no-site-packages tarman
+    cd tarman/
+    bin/pip install .
 
 
 Key bindings
@@ -62,3 +76,4 @@ Development
     virtualenv --no-site-packages tarman
     cd tarman/
     bin/python setup.py develop
+

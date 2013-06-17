@@ -11,9 +11,9 @@ def read(*rnames):
     return open(os.path.join(os.path.dirname(__file__), *rnames)).read()
 
 long_description = \
-    read('README.rst')  # + \          comment this for now
-#    read('docs', 'HISTORY.rst') + \
-#    read('docs', 'LICENSE')
+    read('README.rst') + \
+    read('docs', 'HISTORY.rst') + \
+    read('docs', 'LICENSE')
 
 setup(
     name='tarman',
