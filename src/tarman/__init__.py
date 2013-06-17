@@ -8,6 +8,10 @@ from tarman.overlaywin import TextWin
 from tarman.overlaywin import WorkWin
 from tarman.overlaywin import PathWin
 from tarman.overlaywin import QuestionWin
+from tarman.constants import HEADER_LNS
+from tarman.constants import ITEMS_WARNING
+from tarman.constants import HELP_STRING
+
 
 import curses
 import curses.textpad
@@ -15,22 +19,6 @@ import logging
 import os
 import sys
 import traceback
-
-HEADER_LNS = 1
-ITEMS_WARNING = 10000
-HELP_STRING = """Browser window key bindings:
- c              - create archive from selected files
- e              - extract selected files
- h/?/F1         - this help window
- LEFT/BACKSPACE - go one directory up
- q              - quit
- RIGHT/ENTER    - go in to directory or archive
- SPACE          - select and unselect files
- UP/DOWN        - move up or down in browser
-
-Overlay window key bindings:
- ENTER          - confirm/ok
- ESC            - cancel/close"""
 
 
 class Main(object):
