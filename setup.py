@@ -5,13 +5,35 @@ from setuptools import setup
 from setuptools import find_packages
 
 import os
+import sys
+
+
+def import_path(fullpath):
+    """
+    Import a file with full path specification. Allows one to
+    import from anywhere, something __import__ does not do.
+    """
+    path, filename = os.path.split(fullpath)
+    filename, ext = os.path.splitext(filename)
+    sys.path.append(path)
+    module = __import__(filename)
+    reload(module)  # Might be out of date
+    del sys.path[-1]
+    return module
 
 
 def read(*rnames):
     return open(os.path.join(os.path.dirname(__file__), *rnames)).read()
 
+
+constants = import_path(
+    os.path.join(
+        os.path.dirname(__file__), 'src', 'tarman', 'constants'
+    )
+)
+
 long_description = \
-    read('README.rst') + \
+    read('README.rst').format(help_string=constants.HELP_STRING) + \
     read('docs', 'HISTORY.rst') + \
     read('docs', 'LICENSE')
 
