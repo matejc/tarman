@@ -9,3 +9,4 @@ include/
 local/
 
 !testdata.tar.gz
+!tešt.tar
