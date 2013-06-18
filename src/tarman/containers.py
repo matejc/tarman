@@ -2,42 +2,17 @@ from libarchive import _libarchive
 from tarman.exceptions import NotImplemented
 from tarman.exceptions import OutOfRange
 from tarman.tree import DirectoryTree
+from tarman.helpers import s2u
+from tarman.helpers import makepath
+from tarman.helpers import utf8_args
+from tarman.helpers import utf8_return
 
-import inspect
 import libarchive
 import logging
 import os
 import stat
-import sys
 import tarfile
 import zipfile
-
-
-def get_archive_class(path):
-    classes = inspect.getmembers(sys.modules[__name__], inspect.isclass)
-    for c in classes:
-        if c[0] == 'Archive':
-            continue
-        methods = inspect.getmembers(c[1], inspect.isfunction)
-        for m in methods:
-            if m[0] == 'isarchive':
-                if m[1](path):
-                    return c[1]
-    return None
-
-
-def container(path):
-    aclass = get_archive_class(path)
-    return aclass(path) if aclass else None
-
-
-def makepath(path):
-    try:
-        os.makedirs(path)
-        logging.info("makepath '{0}'".format(path))
-        return True
-    except:
-        return False
 
 
 class Container():

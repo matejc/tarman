@@ -1,17 +1,17 @@
+from tarman.constants import HEADER_LNS
+from tarman.constants import HELP_STRING
+from tarman.constants import ITEMS_WARNING
 from tarman.containers import Archive
 from tarman.containers import FileSystem
-from tarman.containers import get_archive_class
 from tarman.exceptions import OutOfRange
-from tarman.tree import DirectoryTree
-from tarman.viewarea import ViewArea
-from tarman.overlaywin import TextWin
-from tarman.overlaywin import WorkWin
+from tarman.helpers import get_archive_class
+from tarman.helpers import utf8_args
 from tarman.overlaywin import PathWin
 from tarman.overlaywin import QuestionWin
-from tarman.constants import HEADER_LNS
-from tarman.constants import ITEMS_WARNING
-from tarman.constants import HELP_STRING
-
+from tarman.overlaywin import TextWin
+from tarman.overlaywin import WorkWin
+from tarman.tree import DirectoryTree
+from tarman.viewarea import ViewArea
 
 import curses
 import curses.textpad
@@ -19,14 +19,14 @@ import logging
 import os
 import sys
 import traceback
+import locale
 
 
 class Main(object):
 
-    def __init__(self, mainscr, stdscr, directory):
-        logging.basicConfig(
-            filename='tarman.log', filemode='w', level=logging.DEBUG
-        )
+    @utf8_args(3)
+    def __init__(self, mainscr, stdscr, directory, encoding):
+        self.encoding = encoding
         self.header_lns = HEADER_LNS
         self.mainscr = mainscr
         self.stdscr = stdscr
@@ -54,6 +54,7 @@ class Main(object):
         self.checked = DirectoryTree(self.directory, self.container)
         self.chdir(self.directory)
 
+    @utf8_args(1, 2)
     def header(self, prefix, path):
         #self.mainscr.clear()
         h, w = self.mainscr.getmaxyx()
@@ -66,7 +67,9 @@ class Main(object):
             empty = w - length
         self.mainscr.addstr(
             0, 0,
-            "{0}{1}{2}{3}".format(prefix, sep, path, empty * ' ')
+            u"{0}{1}{2}{3}".format(
+                prefix, sep, path, empty * ' '
+            ).encode(self.encoding)
         )
         self.mainscr.refresh()
 
@@ -121,10 +124,10 @@ class Main(object):
                 newsel = 0
 
             self.visited[oldpath] = [oldsel, oldcontainer, oldchecked]
-            logging.info("OLD - {0} - {1} - {2}".format(
+            logging.info(u"OLD - {0} - {1} - {2}".format(
                 oldpath, oldsel, oldcontainer.__class__.__name__
             ))
-            logging.info("NEW - {0} - {1} - {2}".format(
+            logging.info(u"NEW - {0} - {1} - {2}".format(
                 newpath, newsel, newcontainer.__class__.__name__
             ))
 
@@ -149,20 +152,23 @@ class Main(object):
     def insert_line(self, y, item):
         i, name, abspath = item
         self.stdscr.addstr(
-            y, 0, "[{0}]".format('*' if abspath in self.checked else ' ')
+            y, 0,
+            "[{0}]".format(
+                '*' if abspath in self.checked else ' '
+            ).encode(self.encoding)
         )
         if self.color:
             if self.container.isenterable(abspath):
                 attr = self.attr_folder
-                name = "{0}/".format(name)
+                name = u"{0}/".format(name)
             else:
                 attr = self.attr_norm
 
-            self.stdscr.addstr(y, 5, name, attr)
+            self.stdscr.addstr(y, 5, name.encode(self.encoding), attr)
         else:
             if self.container.isenterable(abspath):
-                name = "{0}/".format(name)
-            self.stdscr.addstr(y, 5, name)
+                name = u"{0}/".format(name)
+            self.stdscr.addstr(y, 5, name.encode(self.encoding))
 
     def refresh_scr(self):
         self.stdscr.clear()
@@ -361,6 +367,14 @@ def main():
     # we need faster esc delay for more responsive program
     os.environ['ESCDELAY'] = '25'
 
+    logging.basicConfig(
+        filename='/tmp/tarman.log', filemode='w', level=logging.DEBUG
+    )
+
+    locale.setlocale(locale.LC_ALL, '')  # en_US.UTF-8 ?
+    encoding = locale.getpreferredencoding()
+    logging.info("Encoding: '{0}'".format(encoding))
+
     try:
 
         # Initialize curses
@@ -387,7 +401,7 @@ def main():
         # getch will not block
         #stdscr.nodelay(1)
 
-        main = Main(mainscr, stdscr, arg_directory)
+        main = Main(mainscr, stdscr, arg_directory, encoding)
         main.loop()   # Enter the main loop
 
         # Set everything back to normal

@@ -2,9 +2,8 @@
 
 from tarman.containers import Container
 from tarman.containers import FileSystem
-from tarman.containers import get_archive_class
-from tarman.containers import container
 from tarman.containers import LibArchive
+from tarman.helpers import container
 from tarman.tree import DirectoryTree
 
 import libarchive
@@ -81,24 +80,6 @@ class TestFileSystem(unittest.TestCase):
             self.fs.count_items(self.testdirectory, stop_at=2),
             2
         )
-
-
-class TestContainers(unittest.TestCase):
-
-    def setUp(self):
-        self.testfilepath = tarman.tests.test_containers.__file__
-        self.testdirectory = os.path.dirname(self.testfilepath)
-        self.testarchivepath = os.path.join(
-            self.testdirectory, 'testdata', 'testdata.tar.gz'
-        )
-
-    def test_get_archive_class(self):
-        archive_class = get_archive_class(self.testarchivepath)
-        self.assertEqual(archive_class, LibArchive)
-
-    def test_container(self):
-        c = container(self.testarchivepath)
-        self.assertIsInstance(c, LibArchive)
 
 
 class TestLibArchive(unittest.TestCase):
