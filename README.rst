@@ -34,9 +34,7 @@ Install from PYPI
 
 .. sourcecode:: bash
 
-    virtualenv --no-site-packages some_folder/
-    cd some_folder/
-    bin/pip install tarman
+    pip install tarman
 
 
 Usage
@@ -45,6 +43,15 @@ Usage
 .. sourcecode:: bash
 
     bin/tarman some/directory/
+
+
+Key bindings
+============
+
+Key bindings are listed in HELP window,
+you can access it by pressing *h* or *?* key.
+
+{help_string}
 
 
 Install of development version
@@ -58,13 +65,6 @@ It is very recommended to install it to virtualenv.
     virtualenv --no-site-packages tarman
     cd tarman/
     bin/pip install .
-
-
-Key bindings
-============
-
-Key bindings are listed in HELP window,
-you can access it by pressing *h* or *?* key.
 
 
 Development
