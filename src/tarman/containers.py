@@ -26,15 +26,19 @@ class Container():
     def abspath(self, path):
         raise NotImplemented()
 
+    @utf8_return
     def dirname(self, path):
         return os.path.dirname(path)
 
+    @utf8_return
     def basename(self, path):
         return os.path.basename(path)
 
+    @utf8_return
     def join(self, *parts):
         return os.path.join(*parts)
 
+    @utf8_args(1)
     def split(self, path):
         if path[-1] == os.sep:
             path = path[:-1]
@@ -214,7 +218,7 @@ class Zip(Container, Archive):
 class LibArchive(Container, Archive):
 
     def __init__(self, path):
-        self.path = os.path.abspath(path)
+        self.path = s2u(os.path.abspath(path))
         self.tree = DirectoryTree(self.path, self)
         with LibArchive.open(self.path) as larchive:
             self.archive = larchive
@@ -256,6 +260,7 @@ class LibArchive(Container, Archive):
         return libarchive.Archive(path)
 
     @staticmethod
+    @utf8_args(0, 1)
     def verify(archive_path, pathname, checked):
         # do not allow to go up in the directory tree like that
         if pathname.startswith('..'):
@@ -280,9 +285,10 @@ class LibArchive(Container, Archive):
         return False
 
     @staticmethod
+    @utf8_args(2)
     def extract(container, archive, target_path, checked=None):
-        target_path = os.path.abspath(target_path)
-        archive_path = archive.filename
+        target_path = os.path.abspath(target_path).encode('utf8')
+        archive_path = s2u(archive.filename)
 
         # reopen archive file
         archive.denit()
@@ -292,7 +298,7 @@ class LibArchive(Container, Archive):
         a = archive._a
         try:
             if checked:
-                logging.info("START extract selective '{0}'".format(
+                logging.info(u"START extract selective '{0}'".format(
                     archive_path
                 ))
                 while True:
@@ -302,13 +308,15 @@ class LibArchive(Container, Archive):
                         if r != _libarchive.ARCHIVE_OK:
                             break
 
-                        pathname = _libarchive.archive_entry_pathname(e)
+                        pathname = s2u(_libarchive.archive_entry_pathname(e))
                         if pathname[-1] == '/':
                             pathname = pathname[:-1]
 
-                        path = os.path.join(target_path, pathname)
+                        path = s2u(os.path.join(
+                            target_path, pathname
+                        ))
 
-                        logging.info("from '{0}' to '{1}'".format(
+                        logging.info(u"from '{0}' to '{1}'".format(
                             pathname, path
                         ))
 
@@ -325,22 +333,22 @@ class LibArchive(Container, Archive):
                     finally:
                         _libarchive.archive_entry_free(e)
 
-                logging.info("END extract selective '{0}'".format(
+                logging.info(u"END extract selective '{0}'".format(
                     archive_path
                 ))
 
             else:
-                logging.info("START extract all '{0}'".format(archive_path))
+                logging.info(u"START extract all '{0}'".format(archive_path))
                 while True:
                     try:
                         e = _libarchive.archive_entry_new()
                         r = _libarchive.archive_read_next_header2(a, e)
                         if r != _libarchive.ARCHIVE_OK:
                             break
-                        pathname = _libarchive.archive_entry_pathname(e)
-                        path = os.path.join(target_path, pathname)
+                        pathname = s2u(_libarchive.archive_entry_pathname(e))
+                        path = s2u(os.path.join(target_path, pathname))
 
-                        logging.info("from '{0}' to '{1}'".format(
+                        logging.info(u"from '{0}' to '{1}'".format(
                             pathname, path
                         ))
 
@@ -354,11 +362,12 @@ class LibArchive(Container, Archive):
                                 )
                     finally:
                         _libarchive.archive_entry_free(e)
-                logging.info("END extract all '{0}'".format(archive_path))
+                logging.info(u"END extract all '{0}'".format(archive_path))
         finally:
             archive.close()
 
     @staticmethod
+    @utf8_args(1)
     def create(container, archivepath, checked):
         if not isinstance(container, FileSystem):
             logging.info("container '{0}' is not FileSystem".format(container))
@@ -366,20 +375,17 @@ class LibArchive(Container, Archive):
 
         archivepath = os.path.abspath(archivepath)
 
-        try:
-            with libarchive.Archive(archivepath, 'w') as a:
-                logging.info("START create selective '{0}'".format(
-                    archivepath
+        with libarchive.Archive(archivepath, 'w') as a:
+            logging.info(u"START create selective '{0}'".format(
+                archivepath
+            ))
+            for node in checked:
+                path = s2u(node.get_path())
+                pathname = s2u(os.path.join(*node.get_data_array()[1:]))
+                logging.info(u"from '{0}' to '{1}'".format(
+                    path, pathname
                 ))
-                for node in checked:
-                    path = node.get_path()
-                    pathname = os.path.join(*node.get_data_array()[1:])
-                    logging.info("from '{0}' to '{1}'".format(
-                        path, pathname
-                    ))
-                    a.writepath(path, pathname)
-                logging.info("END create selective '{0}'".format(archivepath))
-        except Exception as e:
-            logging.info("Exception '{0}': {1}".format(e))
-            return False
+                a.writepath(path, pathname)
+            logging.info(u"END create selective '{0}'".format(archivepath))
+
         return True
