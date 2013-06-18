@@ -46,4 +46,17 @@ setup(
         ]
     },
     test_suite='nose.collector',
+    package_data={
+        'tarman':
+        [
+            'tests/testdata/testdata/a/ac',
+            'tests/testdata/testdata/a/ab/.git-keep',
+            'tests/testdata/testdata/a/aa/aaa',
+            'tests/testdata/testdata/c',
+            'tests/testdata/testdata/b/ba/baa/baab',
+            'tests/testdata/testdata/b/ba/baa/baaa/baaaa',
+            'tests/testdata/testdata.tar.gz',
+            'tests/testdata/tešt.tar',
+        ]
+    },
 )
