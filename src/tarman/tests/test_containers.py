@@ -74,11 +74,11 @@ class TestFileSystem(unittest.TestCase):
     def test_count_items(self):
         self.assertEqual(
             self.fs.count_items(self.testdirectory),
-            22
+            25
         )
         self.assertEqual(
-            self.fs.count_items(self.testdirectory, stop_at=2),
-            2
+            self.fs.count_items(self.testdirectory, stop_at=9),
+            9
         )
 
 
@@ -229,9 +229,9 @@ class TestLibArchive(unittest.TestCase):
 
     def test_extract_selective(self):
 
-        path1 = self.testcontainer.join(self.testarchivepath, 'a/aa/aaa')
+        path1 = self.testcontainer.join(self.testarchivepath, 'a', 'aa', 'aaa')
         path2 = self.testcontainer.join(self.testarchivepath, 'c')
-        path3 = self.testcontainer.join(self.testarchivepath, 'a/ab')
+        path3 = self.testcontainer.join(self.testarchivepath, 'a', 'ab')
 
         checked = DirectoryTree(
             self.testarchivepath,
