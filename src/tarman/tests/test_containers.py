@@ -1,3 +1,4 @@
+# -*- coding: UTF-8 -*-
 
 from tarman.containers import Container
 from tarman.containers import FileSystem
@@ -322,4 +323,80 @@ class TestLibArchive(unittest.TestCase):
         self.assertIn(apath3, testdata2archive.tree)
 
         os.remove(testdata2archivepath)
+        os.rmdir(tmpdir)
+
+    def test_extract_utf8(self):
+
+        tmpdir = tempfile.mkdtemp()
+
+        testarchivepath = os.path.join(
+            self.testdirectory, 'testdata', 'tešt.tar'
+        )
+
+        LibArchive.extract(
+            self.testcontainer,
+            container(testarchivepath).archive,
+            tmpdir
+        )
+
+        n = 0
+        for prefix, files, dirs in os.walk(tmpdir):
+            n += len(files) + len(dirs)
+
+        self.assertEqual(n, 1)
+        self.assertTrue(os.path.exists(os.path.join(tmpdir, 'tarmanš.log')))
+
+        # clean up
+        for root, dirs, files in os.walk(tmpdir, topdown=False):
+            for name in files:
+                os.remove(os.path.join(root, name))
+            for name in dirs:
+                os.rmdir(os.path.join(root, name))
+        os.rmdir(tmpdir)
+
+    def test_create_utf8(self):
+
+        tmpdir = tempfile.mkdtemp()
+
+        testarchivepath = os.path.join(
+            self.testdirectory, 'testdata', 'tešt.tar'
+        )
+
+        LibArchive.extract(
+            self.testcontainer,
+            container(testarchivepath).archive,
+            tmpdir
+        )
+
+        path1 = os.path.join(tmpdir, 'tarmanš.log')
+        fs = FileSystem()
+
+        checked = DirectoryTree(
+            tmpdir,
+            fs
+        )
+        checked.add(path1, False)
+
+        testdata2archivepath = os.path.join(
+            tmpdir, 'tešt2.tar'
+        )
+
+        LibArchive.create(
+            fs,
+            testdata2archivepath,
+            checked
+        )
+
+        self.assertTrue(os.path.exists(testdata2archivepath))
+
+        testdata2archive = LibArchive(testdata2archivepath)
+        apath1 = os.path.join(testdata2archivepath, 'tarmanš.log')
+        self.assertIn(apath1, testdata2archive.tree)
+
+        # clean up
+        for root, dirs, files in os.walk(tmpdir, topdown=False):
+            for name in files:
+                os.remove(os.path.join(root, name))
+            for name in dirs:
+                os.rmdir(os.path.join(root, name))
         os.rmdir(tmpdir)
