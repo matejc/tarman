@@ -44,6 +44,8 @@ setup(
     long_description=long_description,
     classifiers=[
         "Programming Language :: Python",
+        "Environment :: Console :: Curses",
+        "Topic :: System :: Archiving",
     ],
     keywords='tar zip archive curses',
     author='Matej Cotman',
