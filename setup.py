@@ -39,7 +39,7 @@ long_description = \
 
 setup(
     name='tarman',
-    version="0.1.1",
+    version="0.1.2",
     description="",
     long_description=long_description,
     classifiers=[
