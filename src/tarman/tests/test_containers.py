@@ -279,7 +279,7 @@ class TestLibArchive(unittest.TestCase):
         )
         checked.add(path1, False)
         checked.add(path2, False)
-        checked.add(path3, False)
+        checked.add(path3, True)
 
         tmpdir = tempfile.mkdtemp()
 
