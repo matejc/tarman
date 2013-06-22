@@ -220,13 +220,29 @@ class LibArchive(Container, Archive):
     def __init__(self, path):
         self.path = s2u(os.path.abspath(path))
         self.tree = DirectoryTree(self.path, self)
+
         with LibArchive.open(self.path) as larchive:
             self.archive = larchive
-            for entry in larchive:
-                pathname = entry.pathname
-                if os.sep == pathname[0]:
-                    pathname = pathname[1:]
-                self.tree.add(os.path.join(self.path, pathname))
+            a = larchive._a
+            while True:
+                try:
+                    e = _libarchive.archive_entry_new()
+                    r = _libarchive.archive_read_next_header2(a, e)
+                    if r != _libarchive.ARCHIVE_OK:
+                        break
+
+                    name = _libarchive.archive_entry_pathname(e)
+                    pathname = s2u(name)
+                    if pathname[-1] == '/':
+                        pathname = pathname[:-1]
+
+                    self.tree.add(os.path.join(self.path, pathname))
+                except UnicodeDecodeError:
+                    logging.info("Unreadable file name: {0} (in '{1}')".format(
+                        self.path, name
+                    ))
+                finally:
+                    _libarchive.archive_entry_free(e)
 
     def listdir(self, path):
         children = self.tree[path].children
