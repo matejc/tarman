@@ -368,7 +368,7 @@ class LibArchive(Container, Archive):
 
     @staticmethod
     @utf8_args(1)
-    def create(container, archivepath, checked):
+    def create2(container, archivepath, checked):
         if not isinstance(container, FileSystem):
             logging.info("container '{0}' is not FileSystem".format(container))
             return False
@@ -389,3 +389,52 @@ class LibArchive(Container, Archive):
             logging.info(u"END create selective '{0}'".format(archivepath))
 
         return True
+
+    @staticmethod
+    @utf8_args(1)
+    def create(container, archivepath, checked):
+        if not isinstance(container, FileSystem):
+            logging.info("container '{0}' is not FileSystem".format(container))
+            return False
+
+        archivepath = os.path.abspath(archivepath)
+        archivefile = open(os.path.abspath(archivepath), "w")
+        BUFFER_SIZE = 2048
+
+        a = _libarchive.archive_write_new()
+        _libarchive.archive_write_add_filter_none(a)
+        _libarchive.archive_write_set_format_pax_restricted(a)
+        _libarchive.archive_write_open_fd(a, archivefile.fileno())
+        for node in checked:
+            if node.is_dir():
+                continue
+            path = s2u(node.get_path())
+            pathname = os.path.join(*node.get_data_array()[1:])
+            st = os.stat(path)
+            entry = _libarchive.archive_entry_new()
+            _libarchive.archive_entry_set_pathname(entry, pathname)
+            _libarchive.archive_entry_set_size(entry, st.st_size)
+            _libarchive.archive_entry_set_filetype(
+                entry, stat.S_IFMT(st.st_mode)
+            )
+            _libarchive.archive_entry_set_mtime(entry, st.st_mtime, 0)
+            _libarchive.archive_entry_set_perm(entry, stat.S_IMODE(st.st_mode))
+            _libarchive.archive_write_header(a, entry)
+
+            f = open(path, 'r')
+
+            data = f.read(BUFFER_SIZE)
+            count = len(data)
+
+            while count > 0:
+                _libarchive.archive_write_data_from_str(a, data)
+                data = f.read(BUFFER_SIZE)
+                count = len(data)
+
+            f.close()
+
+            _libarchive.archive_entry_free(entry)
+
+        _libarchive.archive_write_close(a)
+        _libarchive.archive_write_free(a)
+        archivefile.close()
