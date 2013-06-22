@@ -6,10 +6,10 @@ class ViewArea():
     When you change directory, create new instance.
     """
 
-    def __init__(self, path, height, container, show_unreadable_error):
+    def __init__(self, path, height, container, unreadable_error):
         self.abspath = path
         self.container = container
-        self.show_unreadable_error = show_unreadable_error
+        self.unreadable_error = unreadable_error
 
         unchecked_names = self.container.listdir(self.abspath)
         names = []
@@ -19,7 +19,7 @@ class ViewArea():
                 name.decode("utf8")
                 names += [name]
             except UnicodeDecodeError:
-                self.show_unreadable_error(self.abspath, name)
+                self.unreadable_error(self.abspath, name)
 
         self.list = sorted(names)
         self.first = self.selected = 0
