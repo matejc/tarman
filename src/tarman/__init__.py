@@ -134,7 +134,22 @@ class Main(object):
             h, w = self.stdscr.getmaxyx()
             self.container = newcontainer
             self.checked = newchecked
-            self.area = ViewArea(newpath, h, newcontainer)
+
+            def show_unreadable_error(path, name):
+                error_str = name.decode(
+                    'utf8', errors='replace'
+                ).encode(
+                    'ascii', errors='replace'
+                )
+                logging.info("Unreadable file name: {0} (in '{1}')".format(
+                    error_str, path
+                ))
+                errorwin = TextWin(self)
+                errorwin.show("Unreadable file name:\n{0}\n\nPress ESC to close.".format(error_str))
+
+            self.area = ViewArea(
+                newpath, h, newcontainer, show_unreadable_error
+            )
             self.header(
                 "{0}".format(
                     self.container.__class__.__name__
@@ -172,6 +187,9 @@ class Main(object):
 
     def refresh_scr(self):
         self.stdscr.clear()
+
+        if not getattr(self, 'area', None):
+            return
 
         if len(self.area) == 0:
             self.stdscr.addstr(1, 5, "Directory is empty!")
