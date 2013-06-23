@@ -81,6 +81,7 @@ setup(
             'tests/testdata/testdata/b/ba/baa/baaa/baaaa',
             'tests/testdata/testdata.tar.gz',
             'tests/testdata/tešt.tar',
+            'tests/testdata/corrupted.tar',
         ]
     },
 )
