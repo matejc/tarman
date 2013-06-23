@@ -326,7 +326,7 @@ class LibArchive(Container, Archive):
                             break
 
                         pathname = _libarchive.archive_entry_pathname(e) \
-                            .decode('utf8', errors='replace')
+                            .decode('utf8', 'replace')
                         if pathname[-1] == '/':
                             pathname = pathname[:-1]
 
@@ -364,7 +364,7 @@ class LibArchive(Container, Archive):
                         if r != _libarchive.ARCHIVE_OK:
                             break
                         pathname = _libarchive.archive_entry_pathname(e) \
-                            .decode('utf8', errors='replace')
+                            .decode('utf8', 'replace')
                         path = s2u(os.path.join(target_path, pathname))
 
                         logging.info(u"from '{0}' to '{1}'".format(
