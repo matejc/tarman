@@ -74,7 +74,7 @@ class TestFileSystem(unittest.TestCase):
     def test_count_items(self):
         self.assertEqual(
             self.fs.count_items(self.testdirectory),
-            25
+            26
         )
         self.assertEqual(
             self.fs.count_items(self.testdirectory, stop_at=9),
@@ -91,6 +91,9 @@ class TestLibArchive(unittest.TestCase):
             self.testdirectory, 'testdata', 'testdata.tar.gz'
         )
         self.testcontainer = LibArchive(self.testarchivepath)
+        self.corruptedarchivepath = os.path.join(
+            self.testdirectory, 'testdata', 'corrupted.tar'
+        )
 
     def test_listdir(self):
         self.assertEqual(
@@ -373,6 +376,104 @@ class TestLibArchive(unittest.TestCase):
         testdata2archive = LibArchive(testdata2archivepath)
         apath1 = os.path.join(testdata2archivepath, 'tarmanš.log')
         self.assertIn(apath1, testdata2archive.tree)
+
+        # clean up
+        for root, dirs, files in os.walk(tmpdir, topdown=False):
+            for name in files:
+                os.remove(os.path.join(root, name))
+            for name in dirs:
+                os.rmdir(os.path.join(root, name))
+        os.rmdir(tmpdir)
+
+    def test_corrupted_extract_all(self):
+        tmpdir = tempfile.mkdtemp()
+
+        LibArchive.extract(
+            self.testcontainer,
+            container(self.corruptedarchivepath).archive,
+            tmpdir
+        )
+
+        n = 0
+        for prefix, files, dirs in os.walk(tmpdir):
+            n += len(files) + len(dirs)
+
+        self.assertEqual(n, 1)
+
+        # clean up
+        for root, dirs, files in os.walk(tmpdir, topdown=False):
+            for name in files:
+                os.remove(os.path.join(root, name))
+            for name in dirs:
+                os.rmdir(os.path.join(root, name))
+        os.rmdir(tmpdir)
+
+    def test_corrupted_extract_selective(self):
+
+        path1 = self.corruptedarchivepath
+
+        checked = DirectoryTree(
+            self.corruptedarchivepath,
+            self.testcontainer
+        )
+        checked.add(path1, True)
+
+        tmpdir = tempfile.mkdtemp()
+
+        LibArchive.extract(
+            self.testcontainer,
+            container(self.corruptedarchivepath).archive,
+            tmpdir,
+            checked
+        )
+
+        n = 0
+        for prefix, files, dirs in os.walk(tmpdir):
+            n += len(files) + len(dirs)
+
+        self.assertEqual(n, 0)
+
+        # clean up
+        for root, dirs, files in os.walk(tmpdir, topdown=False):
+            for name in files:
+                os.remove(os.path.join(root, name))
+            for name in dirs:
+                os.rmdir(os.path.join(root, name))
+        os.rmdir(tmpdir)
+
+    def test_corrupted_create(self):
+
+        tmpdir = tempfile.mkdtemp()
+
+        LibArchive.extract(
+            self.testcontainer,
+            container(self.corruptedarchivepath).archive,
+            tmpdir
+        )
+
+        fs = FileSystem()
+        path1 = tmpdir
+
+        checked = DirectoryTree(
+            tmpdir,
+            fs
+        )
+        checked.add(path1, True)
+
+        corrupted2archivepath = os.path.join(
+            tmpdir, 'corrupted2.tar'
+        )
+
+        LibArchive.create(
+            fs,
+            corrupted2archivepath,
+            checked
+        )
+
+        self.assertTrue(os.path.exists(corrupted2archivepath))
+
+        corrupted2archive = LibArchive(corrupted2archivepath)
+        self.assertEqual(len(corrupted2archive.tree.root.children), 0)
 
         # clean up
         for root, dirs, files in os.walk(tmpdir, topdown=False):
