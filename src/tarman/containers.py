@@ -233,13 +233,14 @@ class LibArchive(Container, Archive):
 
                     name = _libarchive.archive_entry_pathname(e)
                     pathname = s2u(name)
+
                     if pathname[-1] == '/':
                         pathname = pathname[:-1]
 
                     self.tree.add(os.path.join(self.path, pathname))
                 except UnicodeDecodeError:
                     logging.info("Unreadable file name: {0} (in '{1}')".format(
-                        self.path, name
+                        name, self.path
                     ))
                 finally:
                     _libarchive.archive_entry_free(e)
@@ -324,7 +325,8 @@ class LibArchive(Container, Archive):
                         if r != _libarchive.ARCHIVE_OK:
                             break
 
-                        pathname = s2u(_libarchive.archive_entry_pathname(e))
+                        pathname = _libarchive.archive_entry_pathname(e) \
+                            .decode('utf8', errors='replace')
                         if pathname[-1] == '/':
                             pathname = pathname[:-1]
 
@@ -361,7 +363,8 @@ class LibArchive(Container, Archive):
                         r = _libarchive.archive_read_next_header2(a, e)
                         if r != _libarchive.ARCHIVE_OK:
                             break
-                        pathname = s2u(_libarchive.archive_entry_pathname(e))
+                        pathname = _libarchive.archive_entry_pathname(e) \
+                            .decode('utf8', errors='replace')
                         path = s2u(os.path.join(target_path, pathname))
 
                         logging.info(u"from '{0}' to '{1}'".format(
