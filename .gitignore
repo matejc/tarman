@@ -10,3 +10,4 @@ local/
 
 !testdata.tar.gz
 !tešt.tar
+!corrupted.tar
