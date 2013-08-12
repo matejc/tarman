@@ -2,10 +2,11 @@ Changelog
 =========
 
 
-0.1.2 (2013-06-22)
+0.1.2 (2013-08-13)
 ------------------
 
 - Fix corrupted file name crash - ignore those files
+- Switch to python-libarchive lower level api for better control
   [Matej Cotman]
   
 
