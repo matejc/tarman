@@ -69,7 +69,10 @@ class Archive():
 class FileSystem(Container):
 
     def listdir(self, path):
-        return os.listdir(path)
+        try:
+            return os.listdir(path)
+        except OSError:
+            return []
 
     def isenterable(self, path):
         return os.path.isdir(path)
