@@ -136,11 +136,10 @@ class Main(object):
             self.checked = newchecked
 
             def show_unreadable_error(path, name):
-                error_str = name.decode(
-                    'utf8', errors='replace'
-                ).encode(
-                    'ascii', errors='replace'
-                )
+                if isinstance(name, unicode):
+                    error_str = name.encode('utf8', errors='replace')
+                else:
+                    error_str = name
                 logging.info("Unreadable file name: {0} (in '{1}')".format(
                     error_str, path
                 ))

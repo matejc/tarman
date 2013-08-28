@@ -16,9 +16,9 @@ class ViewArea():
 
         for name in unchecked_names:
             try:
-                name.decode("utf8")
+                unicode(name)
                 names += [name]
-            except UnicodeDecodeError:
+            except (UnicodeDecodeError, UnicodeEncodeError):
                 self.unreadable_error(self.abspath, name)
 
         self.list = sorted(names)
