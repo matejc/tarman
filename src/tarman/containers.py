@@ -426,6 +426,8 @@ class LibArchive(Container, Archive):
                     continue
                 path = s2u(node.get_path())
                 pathname = os.path.join(*node.get_data_array()[1:])
+                if isinstance(pathname, unicode):
+                    pathname = pathname.encode('utf8', errors='replace')
                 st = os.stat(path)
                 entry = _libarchive.archive_entry_new()
                 _libarchive.archive_entry_set_pathname(entry, pathname)
