@@ -15,11 +15,12 @@ from tarman.viewarea import ViewArea
 
 import curses
 import curses.textpad
+import locale
 import logging
 import os
+import pwd
 import sys
 import traceback
-import locale
 
 
 class Main(object):
@@ -384,9 +385,22 @@ def main():
     # we need faster esc delay for more responsive program
     os.environ['ESCDELAY'] = '25'
 
-    logging.basicConfig(
-        filename='/tmp/tarman.log', filemode='w', level=logging.DEBUG
-    )
+    log_file = os.path.join(pwd.getpwuid(os.getuid()).pw_dir, '.tarman.log')
+
+    # check if 'log_file' is writable
+    # os.access  # returns False if file does not exists
+    # os.access  # on parent directory does not check for files inside
+    # therefore this is the wright solution
+    try:
+        with open(log_file, "w") as tmp_file:
+            tmp_file.write("#")
+
+        logging.basicConfig(
+            filename=log_file,
+            filemode='w', level=logging.DEBUG
+        )
+    except:
+        logging.basicConfig(level=logging.DEBUG)
 
     locale.setlocale(locale.LC_ALL, '')  # en_US.UTF-8 ?
     encoding = locale.getpreferredencoding()
