@@ -15,7 +15,8 @@ At first it was meant to be only for tar archives (hence the name),
 but support for other archives does not hurt. 
 Dependencies are:
 
-    * libarchive
+    * libarchive-dev
+    * python-libarchive
     * Python 2.7 (or Python 2.6)
 
 
