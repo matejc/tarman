@@ -10,6 +10,7 @@ HELP_STRING = """Browser window key bindings:
   - RIGHT/ENTER    - go in to directory or archive
   - SPACE          - select and unselect files
   - UP/DOWN        - move up or down in browser
+  - .              - toggle show/hide hidden files (".*")
 
 Overlay window key bindings:
   - ENTER          - confirm/ok
