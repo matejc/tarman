@@ -4,7 +4,7 @@ ITEMS_WARNING = 10000
 HELP_STRING = """Browser window key bindings:
   - c              - create archive from selected files
   - e              - extract selected files
-  - ?/F1         - help window
+  - ?/F1           - help window
   - LEFT/BACKSPACE - go one directory up
   - q              - quit
   - RIGHT/ENTER    - go in to directory or archive
