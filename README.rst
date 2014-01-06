@@ -77,4 +77,6 @@ Development
     virtualenv --no-site-packages tarman
     cd tarman/
     bin/python setup.py develop
+    
+    bin/python setup.py test  # to run tests
 
