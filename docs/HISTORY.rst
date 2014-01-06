@@ -4,7 +4,8 @@ Changelog
 0.1.4 (unreleased)
 ------------------
 
- - Nothing yet.
+ - Added hidden file view toggle
+   [Shaun Marshall]
 
 
 0.1.3 (2013-08-28)

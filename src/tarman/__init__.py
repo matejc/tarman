@@ -341,12 +341,12 @@ class Main(object):
 
                 TextWin(self).show("Extracted to:\n{0}".format(s))
 
-            elif self.ch in [ord('?'), curses.KEY_F1, ord('h')]:
+            elif self.ch in [ord('?'), curses.KEY_F1]:
                 curses.curs_set(0)
                 textwin = TextWin(self)
                 textwin.show(HELP_STRING)
 
-            if self.ch == ord('.'):
+            if self.ch == ord('h'):
                 if self.show_hiddens == True:
                     self.show_hiddens = False
                 else:
