@@ -26,7 +26,7 @@ import traceback
 class Main(object):
 
     @utf8_args(3)
-    def __init__(self, mainscr, stdscr, directory, encoding):
+    def __init__(self, mainscr, stdscr, directory, encoding, show_hiddens):
         self.encoding = encoding
         self.header_lns = HEADER_LNS
         self.mainscr = mainscr
@@ -53,6 +53,7 @@ class Main(object):
         self.container = FileSystem()
         self.directory = self.container.abspath(directory)
         self.checked = DirectoryTree(self.directory, self.container)
+        self.show_hiddens = show_hiddens
         self.chdir(self.directory)
 
     @utf8_args(1, 2)
@@ -148,7 +149,7 @@ class Main(object):
                 errorwin.show("Unreadable file name:\n{0}\n\nPress ESC to close.".format(error_str))
 
             self.area = ViewArea(
-                newpath, h, newcontainer, show_unreadable_error
+                newpath, h, newcontainer, show_unreadable_error, self.show_hiddens
             )
             self.header(
                 "{0}".format(
@@ -341,8 +342,16 @@ class Main(object):
                 TextWin(self).show("Extracted to:\n{0}".format(s))
 
             elif self.ch in [ord('?'), curses.KEY_F1, ord('h')]:
+                curses.curs_set(0)
                 textwin = TextWin(self)
                 textwin.show(HELP_STRING)
+
+            if self.ch == ord('.'):
+                if self.show_hiddens == True:
+                    self.show_hiddens = False
+                else:
+                    self.show_hiddens = True
+                self.chdir(self.area.abspath)
 
             if self.ch != -1:
                 self.refresh_scr()
@@ -432,7 +441,7 @@ def main():
         # getch will not block
         #stdscr.nodelay(1)
 
-        main = Main(mainscr, stdscr, arg_directory, encoding)
+        main = Main(mainscr, stdscr, arg_directory, encoding, show_hiddens=True)
         main.loop()   # Enter the main loop
 
         # Set everything back to normal
