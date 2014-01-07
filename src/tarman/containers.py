@@ -1,11 +1,12 @@
 from libarchive import _libarchive
 from tarman.exceptions import NotImplemented
 from tarman.exceptions import OutOfRange
-from tarman.tree import DirectoryTree
-from tarman.helpers import s2u
 from tarman.helpers import makepath
+from tarman.helpers import s2u
+from tarman.helpers import u2s
 from tarman.helpers import utf8_args
 from tarman.helpers import utf8_return
+from tarman.tree import DirectoryTree
 
 import libarchive
 import logging
@@ -277,7 +278,7 @@ class LibArchive(Container, Archive):
 
     @staticmethod
     def open(path):
-        return libarchive.Archive(path)
+        return libarchive.Archive(u2s(path))
 
     @staticmethod
     @utf8_args(0, 1)
@@ -307,7 +308,7 @@ class LibArchive(Container, Archive):
     @staticmethod
     @utf8_args(2)
     def extract(container, archive, target_path, checked=None):
-        target_path = os.path.abspath(target_path).encode('utf8')
+        target_path = os.path.abspath(target_path)
         archive_path = s2u(archive.filename)
 
         # reopen archive file
@@ -328,17 +329,16 @@ class LibArchive(Container, Archive):
                         if r != _libarchive.ARCHIVE_OK:
                             break
 
-                        pathname = _libarchive.archive_entry_pathname(e) \
-                            .decode('utf8', 'replace')
+                        pathname = _libarchive.archive_entry_pathname(e)
                         if pathname[-1] == '/':
                             pathname = pathname[:-1]
 
-                        path = s2u(os.path.join(
-                            target_path, pathname
-                        ))
+                        path = os.path.join(
+                            target_path, s2u(pathname)
+                        )
 
                         logging.info(u"from '{0}' to '{1}'".format(
-                            pathname, path
+                            s2u(pathname), s2u(path)
                         ))
 
                         if LibArchive.verify(archive_path, pathname, checked):
@@ -366,19 +366,18 @@ class LibArchive(Container, Archive):
                         r = _libarchive.archive_read_next_header2(a, e)
                         if r != _libarchive.ARCHIVE_OK:
                             break
-                        pathname = _libarchive.archive_entry_pathname(e) \
-                            .decode('utf8', 'replace')
-                        path = s2u(os.path.join(target_path, pathname))
+                        pathname = _libarchive.archive_entry_pathname(e)
+                        path = os.path.join(target_path, s2u(pathname))
 
                         logging.info(u"from '{0}' to '{1}'".format(
-                            pathname, path
+                            s2u(pathname), s2u(path)
                         ))
 
                         if stat.S_ISDIR(_libarchive.archive_entry_filetype(e)):
                             makepath(path)
                         else:
                             makepath(os.path.dirname(path))
-                            with open(path, 'wb') as f:
+                            with open(u2s(path), 'wb') as f:
                                 _libarchive.archive_read_data_into_fd(
                                     a, f.fileno()
                                 )
@@ -413,13 +412,12 @@ class LibArchive(Container, Archive):
         return True
 
     @staticmethod
-    @utf8_args(1)
     def create(container, archivepath, checked):
         if not isinstance(container, FileSystem):
             logging.info("container '{0}' is not FileSystem".format(container))
             return False
 
-        archivepath = os.path.abspath(archivepath)
+        archivepath = os.path.abspath(u2s(archivepath))
         BUFFER_SIZE = 2048
 
         with libarchive.Archive(archivepath, 'w') as larchive:
@@ -427,10 +425,8 @@ class LibArchive(Container, Archive):
             for node in checked:
                 if node.is_dir():
                     continue
-                path = s2u(node.get_path())
-                pathname = os.path.join(*node.get_data_array()[1:])
-                if isinstance(pathname, unicode):
-                    pathname = pathname.encode('utf8', errors='replace')
+                path = u2s(node.get_path())
+                pathname = u2s(os.path.join(*node.get_data_array()[1:]))
                 st = os.stat(path)
                 entry = _libarchive.archive_entry_new()
                 _libarchive.archive_entry_set_pathname(entry, pathname)

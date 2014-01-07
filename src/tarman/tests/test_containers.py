@@ -21,6 +21,7 @@ class TestFileSystem(unittest.TestCase):
         self.testcwd = os.getcwd()
         self.testfilepath = tarman.tests.test_containers.__file__
         self.testdirectory = os.path.dirname(self.testfilepath)
+        self.testdatadir = os.path.join(self.testdirectory, 'testdata')
 
     def test_container(self):
         self.assertTrue(isinstance(self.fs, Container))
@@ -73,11 +74,11 @@ class TestFileSystem(unittest.TestCase):
 
     def test_count_items(self):
         self.assertEqual(
-            self.fs.count_items(self.testdirectory),
-            26
+            self.fs.count_items(self.testdatadir),
+            17
         )
         self.assertEqual(
-            self.fs.count_items(self.testdirectory, stop_at=9),
+            self.fs.count_items(self.testdatadir, stop_at=9),
             9
         )
 

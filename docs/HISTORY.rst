@@ -4,8 +4,12 @@ Changelog
 0.1.4 (unreleased)
 ------------------
 
- - Added hidden file view toggle
-   [Shaun Marshall]
+- Refactor unicode support for lower level functions.
+  [Matej Cotman]
+- Fixed Hydra build error.
+  [Matej Cotman]
+- Added hidden file view toggle
+  [Shaun Marshall]
 
 
 0.1.3 (2013-08-28)
