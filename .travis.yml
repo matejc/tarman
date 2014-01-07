@@ -10,6 +10,3 @@ install:
   - "python setup.py develop"
 script:
   - "python setup.py test"
-notifications:
-  irc:
-    - "irc.sioff.net#kiberpipa"

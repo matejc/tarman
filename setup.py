@@ -74,7 +74,7 @@ setup(
         'tarman':
         [
             'tests/testdata/testdata/a/ac',
-            'tests/testdata/testdata/a/ab/.git-keep',
+            'tests/testdata/testdata/a/ab/.abb',
             'tests/testdata/testdata/a/aa/aaa',
             'tests/testdata/testdata/c',
             'tests/testdata/testdata/b/ba/baa/baab',

@@ -1,6 +1,7 @@
 
 import tarman.containers
 
+import codecs
 import inspect
 import sys
 import os
@@ -39,11 +40,9 @@ def s2u(s):
 
     if isinstance(s, unicode):
         return s
-    elif isinstance(s, str):
-        return s.decode("utf8")
     else:
         try:
-            return unicode(s)
+            return unicode(s, encoding="utf8", errors='replace')
         except:
             raise Exception("Ya talkin' gibberish? '{0}'".format(s))
 
@@ -96,3 +95,15 @@ def utf8_return(f):
     def wrap(*argparams, **kwparams):
         return s2u(f(*argparams, **kwparams))
     return wrap
+
+
+def u2s(uni):
+    """u2s - unicode to string, the safe way"""
+
+    if isinstance(uni, str):
+        return uni
+    else:
+        try:
+            return codecs.utf_8_encode(uni)[0]
+        except:
+            raise Exception("Ya talkin' gibberish? '{0}'".format(uni))
