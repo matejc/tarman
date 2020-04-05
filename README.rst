@@ -12,12 +12,10 @@ Well here comes the tarman, it has only two command line options:
 
 
 At first it was meant to be only for tar archives (hence the name),
-but support for other archives does not hurt. 
+but support for other archives does not hurt.
 Dependencies are:
 
-    * libarchive-dev
-    * python-libarchive
-    * Python 2.7 (or Python 2.6)
+    * Python 3
 
 
 It supports archives that are manageable with libarchive.
@@ -62,7 +60,7 @@ It is very recommended to install it to virtualenv.
 
 .. sourcecode:: bash
 
-    git clone git://github.com/matejc/tarman.git 
+    git clone git://github.com/matejc/tarman.git
     virtualenv --no-site-packages tarman
     cd tarman/
     bin/pip install .
@@ -73,10 +71,10 @@ Development
 
 .. sourcecode:: bash
 
-    git clone git://github.com/matejc/tarman.git 
+    git clone git://github.com/matejc/tarman.git
     virtualenv --no-site-packages tarman
     cd tarman/
     bin/python setup.py develop
-    
+
     bin/python setup.py test  # to run tests
 

@@ -6,21 +6,11 @@ class ViewArea():
     When you change directory, create new instance.
     """
 
-    def __init__(self, path, height, container, unreadable_error, show_hiddens):
+    def __init__(self, path, height, container):
         self.abspath = path
         self.container = container
-        self.unreadable_error = unreadable_error
 
-        unchecked_names = self.container.listdir(self.abspath)
-        names = []
-
-        for name in unchecked_names:
-            try:
-                unicode(name)
-                if not (show_hiddens == True and name.startswith('.')):
-                    names += [name]
-            except (UnicodeDecodeError, UnicodeEncodeError):
-                self.unreadable_error(self.abspath, name)
+        names = self.container.listdir(self.abspath)
 
         self.list = sorted(names)
         self.first = self.selected = 0
@@ -87,31 +77,3 @@ class ViewArea():
 
     def __len__(self):
         return self.last - self.first + 1
-
-
-def print_area(path):
-    area = ViewArea(path, 4)
-    off = 8
-    area.set_params(4, offset=off)
-    print "{0} of {1}, offset:{2}, path: '{3}'".format(
-        len(area), len(area.list), off, area.abspath
-    )
-    for item in area:
-        print item
-
-
-if __name__ == "__main__":
-
-    tree = DirectoryTree("/home/matej/workarea/matejc.myportal/src")
-
-    a1 = tree.add("a1")
-    a2 = tree.add(
-        "/home/matej/workarea/matejc.myportal/"
-        "src/matejc/myportal/profiles", True
-    )
-    a3 = tree.add(
-        "/home/matej/workarea/matejc.myportal/src/matejc/__init__.py"
-    )
-
-    print_area("/home/matej/workarea/matejc.myportal/src/")
-    print_area("/home/matej/workarea/matejc.myportal/src/matejc/myportal")

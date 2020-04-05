@@ -5,7 +5,6 @@ from tarman.containers import Archive
 from tarman.containers import FileSystem
 from tarman.exceptions import OutOfRange
 from tarman.helpers import get_archive_class
-from tarman.helpers import utf8_args
 from tarman.overlaywin import PathWin
 from tarman.overlaywin import QuestionWin
 from tarman.overlaywin import TextWin
@@ -25,8 +24,7 @@ import traceback
 
 class Main(object):
 
-    @utf8_args(3)
-    def __init__(self, mainscr, stdscr, directory, encoding, show_hiddens):
+    def __init__(self, mainscr, stdscr, directory, encoding):
         self.encoding = encoding
         self.header_lns = HEADER_LNS
         self.mainscr = mainscr
@@ -53,12 +51,9 @@ class Main(object):
         self.container = FileSystem()
         self.directory = self.container.abspath(directory)
         self.checked = DirectoryTree(self.directory, self.container)
-        self.show_hiddens = show_hiddens
         self.chdir(self.directory)
 
-    @utf8_args(1, 2)
     def header(self, prefix, path):
-        #self.mainscr.clear()
         h, w = self.mainscr.getmaxyx()
         sep = "  "
         length = len(prefix) + len(path) + len(sep)
@@ -69,7 +64,7 @@ class Main(object):
             empty = w - length
         self.mainscr.addstr(
             0, 0,
-            u"{0}{1}{2}{3}".format(
+            "{0}{1}{2}{3}".format(
                 prefix, sep, path, empty * ' '
             ).encode(self.encoding)
         )
@@ -126,10 +121,10 @@ class Main(object):
                 newsel = 0
 
             self.visited[oldpath] = [oldsel, oldcontainer, oldchecked]
-            logging.info(u"OLD - {0} - {1} - {2}".format(
+            logging.info("OLD - {0} - {1} - {2}".format(
                 oldpath, oldsel, oldcontainer.__class__.__name__
             ))
-            logging.info(u"NEW - {0} - {1} - {2}".format(
+            logging.info("NEW - {0} - {1} - {2}".format(
                 newpath, newsel, newcontainer.__class__.__name__
             ))
 
@@ -137,20 +132,10 @@ class Main(object):
             self.container = newcontainer
             self.checked = newchecked
 
-            def show_unreadable_error(path, name):
-                if isinstance(name, unicode):
-                    error_str = name.encode('utf8', errors='replace')
-                else:
-                    error_str = name
-                logging.info("Unreadable file name: {0} (in '{1}')".format(
-                    error_str, path
-                ))
-                errorwin = TextWin(self)
-                errorwin.show("Unreadable file name:\n{0}\n\nPress ESC to close.".format(error_str))
-
             self.area = ViewArea(
-                newpath, h, newcontainer, show_unreadable_error, self.show_hiddens
+                newpath, h, newcontainer
             )
+
             self.header(
                 "{0}".format(
                     self.container.__class__.__name__
@@ -346,13 +331,6 @@ class Main(object):
                 textwin = TextWin(self)
                 textwin.show(HELP_STRING)
 
-            if self.ch == ord('h'):
-                if self.show_hiddens == True:
-                    self.show_hiddens = False
-                else:
-                    self.show_hiddens = True
-                self.chdir(self.area.abspath)
-
             if self.ch != -1:
                 self.refresh_scr()
 
@@ -379,9 +357,9 @@ def main():
     else:
 
         if sys.argv[1] in ['-h', '--help']:
-            print "Usage: {0} <PATH>\n\n{1}".format(
+            print("Usage: {0} <PATH>\n\n{1}".format(
                 os.path.basename(sys.argv[0]), HELP_STRING
-            )
+            ))
             sys.exit(0)
 
         arg_directory = os.path.abspath(sys.argv[1])
@@ -415,6 +393,8 @@ def main():
     encoding = locale.getpreferredencoding()
     logging.info("Encoding: '{0}'".format(encoding))
 
+    app = None
+
     try:
 
         # Initialize curses
@@ -433,36 +413,36 @@ def main():
         # In keypad mode, escape sequences for special keys
         # (like the cursor keys) will be interpreted and
         # a special value like curses.key_left will be returned
-        stdscr.keypad(1)
+        stdscr.keypad(True)
 
         # getch will block for 500ms
-        #stdscr.timeout(500)
+        # stdscr.timeout(500)
 
         # getch will not block
-        #stdscr.nodelay(1)
+        # stdscr.nodelay(1)
 
-        main = Main(mainscr, stdscr, arg_directory, encoding, show_hiddens=True)
-        main.loop()   # Enter the main loop
+        app = Main(mainscr, stdscr, arg_directory, encoding)
+        app.loop()   # Enter the main loop
 
         # Set everything back to normal
-        stdscr.keypad(0)
+        stdscr.keypad(False)
         curses.echo()
         curses.nocbreak()
         curses.endwin()                 # Terminate curses
     except:
         # In the event of an error, restore the terminal
         # to a sane state.
-        stdscr.keypad(0)
+        stdscr.keypad(False)
         curses.echo()
         curses.nocbreak()
         curses.endwin()
         traceback.print_exc()           # Print the exception
-        main.cancel()
+        app.cancel()
 
-    logging.info(main.visited)
+    logging.info(app.visited)
 
-    logging.info(str(main.checked))
-    for item in main.checked:
+    logging.info(str(app.checked))
+    for item in app.checked:
         logging.info(str(item.get_data_array()))
 
 

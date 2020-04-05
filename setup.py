@@ -1,11 +1,10 @@
 # -*- coding: utf-8 -*-
 """Installer for this package."""
+import os
+import sys
 
 from setuptools import setup
 from setuptools import find_packages
-
-import os
-import sys
 
 
 def import_path(fullpath):
@@ -14,10 +13,10 @@ def import_path(fullpath):
     import from anywhere, something __import__ does not do.
     """
     path, filename = os.path.split(fullpath)
-    filename, ext = os.path.splitext(filename)
+    filename, _ = os.path.splitext(filename)
     sys.path.append(path)
     module = __import__(filename)
-    reload(module)  # Might be out of date
+    # reload(module)  # Might be out of date
     del sys.path[-1]
     return module
 
@@ -57,7 +56,6 @@ setup(
     zip_safe=False,
     install_requires=[
         'setuptools',
-        'python-libarchive',
     ],
     tests_require=[
         'mock',

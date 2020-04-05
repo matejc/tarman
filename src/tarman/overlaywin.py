@@ -34,7 +34,7 @@ class TextWin(OverlayWin):
         self.exitstatus = -1
         self.newwin = self.main.stdscr.derwin(
             height, width,
-            (lines / 2) - (height / 2), (columns / 2) - (width / 2)
+            (lines // 2) - (height // 2), (columns // 2) - (width // 2)
         )
         self.newwin.clear()
         self.newwin.border()
@@ -77,7 +77,7 @@ class QuestionWin(OverlayWin):
         self.exitstatus = -1
         self.newwin = self.main.stdscr.derwin(
             height, width,
-            (lines / 2) - (height / 2), (columns / 2) - (width / 2)
+            (lines // 2) - (height // 2), (columns // 2) - (width // 2)
         )
         self.newwin.clear()
         self.newwin.border()
@@ -116,9 +116,9 @@ class WorkWin(OverlayWin):
         lines, columns = self.main.stdscr.getmaxyx()
         self.showing = True
         self.exitstatus = -1
-        w = columns / 2
+        w = columns // 2
         self.newwin = self.main.stdscr.derwin(
-            3, w, (lines / 2) - (3 / 2), w - (columns / 4)
+            3, w, (lines // 2) - (3 // 2), w - (columns // 4)
         )
         self.newwin.clear()
         self.newwin.nodelay(1)
@@ -176,7 +176,7 @@ class PathWin(OverlayWin):
         self.showing = True
         self.exitstatus = -1
         self.newwin = self.main.stdscr.derwin(
-            5, columns, (lines / 2) - (5 / 2), 0
+            5, columns, (lines // 2) - (5 // 2), 0
         )
         self.text = text
         self.newwin.clear()
